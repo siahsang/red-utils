@@ -27,16 +27,21 @@ public class RedisServer {
     private GenericContainer<?> redisContainer;
 
     public RedisAddress startSingleInstance() {
-        return startRedis(0, true, AOFConfiguration.ALWAYS);
+        return startRedis(0, AOFConfiguration.ALWAYS);
     }
 
     public RedisAddress startMasterReplicas(final int replicaCount) {
-        return startRedis(replicaCount, true, AOFConfiguration.ALWAYS);
+        return startRedis(replicaCount, AOFConfiguration.ALWAYS);
     }
 
 
-    public RedisAddress startRedis(final int replicaCount, final boolean enableAOF, final AOFConfiguration AOFConfig) {
-        String enableAOFStr = enableAOF ? "yes" : "no";
+    public RedisAddress startRedis(final int replicaCount, final AOFConfiguration AOFConfig) {
+        String enableAOFStr = "no";
+
+        if (!AOFConfig.equals(AOFConfiguration.NO)) {
+            enableAOFStr = "yes";
+        }
+
         Integer[] exposedPorts = new Integer[1 + replicaCount];
 
         exposedPorts[0] = DEFAULT_MASTER_PORT;
@@ -55,6 +60,10 @@ public class RedisServer {
         redisContainer.start();
 
         return new RedisAddress(redisContainer.getFirstMappedPort(), redisContainer.getHost());
+    }
+
+    public void shutDown() {
+        redisContainer.stop();
     }
 
     public void shutdownMaster() throws IOException, InterruptedException {
@@ -79,9 +88,7 @@ public class RedisServer {
         log.info("Pausing replica number [{}] for [{}] second(s)", replicaNumber, seconds);
         redisContainer.execInContainer("redis-cli", "-p",
                 String.valueOf(exposedPorts.get(port)), "CLIENT", "PAUSE", pauseTimeInMillis);
-
     }
-
 
     private void raiseExceptionIfNoReplicaAvailable() {
         List<Integer> exposedPorts = redisContainer.getExposedPorts();

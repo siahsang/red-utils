@@ -37,6 +37,7 @@ public class RedUtilsConfig {
         this.lockMaxPoolSize = redUtilsConfigBuilder.lockMaxPoolSize;
         this.channelMaxPoolSize = redUtilsConfigBuilder.channelMaxPoolSize;
         this.redUtilsUnLockedMessagePattern = redUtilsConfigBuilder.redUtilsUnLockedMessage;
+        this.replicaCount = redUtilsConfigBuilder.replicaCount;
         this.hostAddress = redUtilsConfigBuilder.hostAddress;
         this.port = redUtilsConfigBuilder.port;
 

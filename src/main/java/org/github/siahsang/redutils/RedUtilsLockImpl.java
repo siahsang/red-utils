@@ -62,6 +62,7 @@ public class RedUtilsLockImpl implements RedUtilsLock {
     }
 
     public RedUtilsLockImpl(RedUtilsConfig redUtilsConfig) {
+        this.redUtilsConfig = redUtilsConfig;
         GenericObjectPoolConfig<Jedis> lockPoolConfig = ResourcePoolManager.makePool(redUtilsConfig.getLockMaxPoolSize());
         GenericObjectPoolConfig<Jedis> channelPoolConfig = ResourcePoolManager.makePool(redUtilsConfig.getChannelMaxPoolSize());
         JedisPool channelConnectionPool = new JedisPool(
@@ -214,7 +215,7 @@ public class RedUtilsLockImpl implements RedUtilsLock {
             jedis.publish(lockName, redUtilsConfig.getRedUtilsUnLockedMessagePattern());
         } catch (Exception exception) {
             // nothing
-            log.debug("Could not notify [{}] to other client", lockName);
+            log.error("Error in notify [{}] to other clients", lockName, exception);
         }
     }
 

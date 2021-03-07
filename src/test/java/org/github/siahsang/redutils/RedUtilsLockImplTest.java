@@ -65,7 +65,7 @@ class RedUtilsLockImplTest extends AbstractBaseTest {
     }
 
     @Test
-    void test_tryAcquire_WHEN_redis_stop_after_getting_lock_THEN_we_should_not_able_to_get_new_lock() throws Exception {
+    void test_tryAcquire_WHEN_redis_stop_after_getting_lock_THEN_we_SHOULD_NOT_able_to_get_new_lock() throws Exception {
         //************************
         //          Given
         //************************
@@ -94,7 +94,7 @@ class RedUtilsLockImplTest extends AbstractBaseTest {
         firstThread.start();
         Awaitility.await("check first thread can get the lock").untilTrue(firstThreadTryToGetLock);
 
-        redisServer.shutdownMaster();
+        redisServer.shutDown();
 
         //************************
         //          THEN
@@ -145,7 +145,7 @@ class RedUtilsLockImplTest extends AbstractBaseTest {
         try {
             runningFirstThreadFuture.join();
         } catch (Exception exception) {
-            Awaitility.await("check raisedException is set").until(() -> {
+            Awaitility.await("check raised exception is set").until(() -> {
                 return raisedException.get() != null;
             });
         }
@@ -155,7 +155,7 @@ class RedUtilsLockImplTest extends AbstractBaseTest {
     }
 
     @Test
-    void test_tryAcquire_WHEN_two_threads_want_to_get_the_lock_the_last_one_SHOULD_not_be_able_to_get_lock() throws Exception {
+    void test_tryAcquire_WHEN_two_threads_want_to_get_lock_THEN_last_one_SHOULD_NOT_be_able_to_get_lock() throws Exception {
         //************************
         //          Given
         //************************
@@ -216,7 +216,7 @@ class RedUtilsLockImplTest extends AbstractBaseTest {
     }
 
     @Test
-    void test_acquire_WHEN_two_threads_want_to_get_the_lock_the_last_one_SHOULD_not_be_able_to_get_lock() throws Exception {
+    void test_acquire_WHEN_two_threads_want_to_get_lock_THEN_last_one_SHOULD_NOT_be_able_to_get_lock() throws Exception {
         //************************
         //          Given
         //************************
@@ -400,6 +400,7 @@ class RedUtilsLockImplTest extends AbstractBaseTest {
         //************************
         //          THEN
         //************************
+
         Assertions.assertTrue(allThreadExecutionFinished);
         Assertions.assertEquals(expectedResourceValue, sharedResource.get());
     }

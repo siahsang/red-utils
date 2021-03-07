@@ -1,0 +1,19 @@
+<configuration scan="true" scanPeriod="1 seconds" packagingData="true">
+
+
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{HH:mm:ss.SSS} %highlight(%-5level) %cyan(%logger{35}){}\(%line\) -- %msg%n</pattern>
+        </encoder>
+    </appender>
+
+
+    <logger name="org.github.siahsang" level="TRACE"/>
+
+
+    <root level="INFO">
+        <appender-ref ref="STDOUT"/>
+    </root>
+
+
+</configuration>

@@ -37,7 +37,7 @@ public class LockRefresher {
             CompletableFuture<Void> resultCompletableFuture = Scheduler.scheduleAtFixRate(executor, () -> {
                 try {
                     log.trace("Refreshing the lock [{}]", lockName);
-                    jedis.eval(LuaScript.REFRESH_LOCK, 1, lockName, String.valueOf(RedUtilsLockImpl.LEASE_TIME_MILLIS));
+                    jedis.pexpire(lockName, refreshPeriodMillis);
                     replicaManager.waitForReplicaResponse(jedis);
                 } catch (Exception ex) {
                     String errMSG = String.format("Error in refreshing the lock '%s'", lockName);

@@ -23,9 +23,6 @@ public class RedUtilsLockImpl implements RedUtilsLock {
 
     private final ExecutorService operationExecutorService = Executors.newCachedThreadPool();
 
-    // TODO: 2/26/21 make this properties configurable.
-    public static final int LEASE_TIME_MILLIS = 30_000;
-
     private final String uuid = UUID.randomUUID().toString();
 
     private final JedisPool lockConnectionPool;
@@ -96,7 +93,7 @@ public class RedUtilsLockImpl implements RedUtilsLock {
 
         try (Jedis jedis = lockConnectionPool.getResource()) {
 
-            boolean getLockSuccessfully = getLock(jedis, lockName, LEASE_TIME_MILLIS);
+            boolean getLockSuccessfully = getLock(jedis, lockName, redUtilsConfig.getLeaseTimeMillis());
 
             if (getLockSuccessfully) {
                 try {
@@ -127,7 +124,7 @@ public class RedUtilsLockImpl implements RedUtilsLock {
     @Override
     public void acquire(final String lockName, final OperationCallBack operationCallBack) {
         try (Jedis jedis = lockConnectionPool.getResource()) {
-            boolean getLockSuccessfully = getLock(jedis, lockName, LEASE_TIME_MILLIS);
+            boolean getLockSuccessfully = getLock(jedis, lockName, redUtilsConfig.getLeaseTimeMillis());
 
             if (!getLockSuccessfully) {
                 try {
@@ -138,7 +135,7 @@ public class RedUtilsLockImpl implements RedUtilsLock {
                         if (ttl > 0) {
                             lockChannel.waitForNotification(lockName, ttl);
                         } else {
-                            getLockSuccessfully = getLock(jedis, lockName, LEASE_TIME_MILLIS);
+                            getLockSuccessfully = getLock(jedis, lockName, redUtilsConfig.getLeaseTimeMillis());
                         }
                     }
                 } catch (InterruptedException ex) {
@@ -215,7 +212,7 @@ public class RedUtilsLockImpl implements RedUtilsLock {
             jedis.publish(lockName, redUtilsConfig.getRedUtilsUnLockedMessagePattern());
         } catch (Exception exception) {
             // nothing
-            log.error("Error in notify [{}] to other clients", lockName, exception);
+            log.debug("Error in notify [{}] to other clients", lockName, exception);
         }
     }
 

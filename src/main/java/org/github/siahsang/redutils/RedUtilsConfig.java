@@ -9,25 +9,25 @@ public class RedUtilsConfig {
 
     public static final int DEFAULT_PORT = 6379;
 
-    private int waitingTimeForReplicasMillis;
+    private final int waitingTimeForReplicasMillis;
 
-    private int retryCountForSyncingWithReplicas;
+    private final int retryCountForSyncingWithReplicas;
 
-    private int leaseTimeMillis;
+    private final int leaseTimeMillis;
 
-    private int readTimeOutMillis;
+    private final int readTimeOutMillis;
 
-    private int lockMaxPoolSize;
+    private final int lockMaxPoolSize;
 
-    private int channelMaxPoolSize;
+    private final int channelMaxPoolSize;
 
-    private String redUtilsUnLockedMessagePattern;
+    private final String redUtilsUnLockedMessagePattern;
 
-    private int replicaCount;
+    private final int replicaCount;
 
-    private String hostAddress;
+    private final String hostAddress;
 
-    public int port;
+    public final int port;
 
     private RedUtilsConfig(RedUtilsConfigBuilder redUtilsConfigBuilder) {
         this.waitingTimeForReplicasMillis = redUtilsConfigBuilder.waitingTimeForReplicasMillis;
@@ -91,7 +91,7 @@ public class RedUtilsConfig {
 
         private int leaseTimeMillis = 30_000;
 
-        private int readTimeOutMillis = 5000;
+        private int readTimeOutMillis = 2000;
 
         private int lockMaxPoolSize = 60;
 

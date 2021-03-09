@@ -107,18 +107,21 @@ class RedUtilsLockImplTest extends AbstractBaseTest {
     }
 
     @Test
-    void test_tryAcquire_WHEN_redis_stopped_during_processing_THEN_we_SHOULD_get_exception() throws Exception {
+    void test_tryAcquire_WHEN_redis_become_unavailable_after_getting_lock_THEN_we_SHOULD_get_exception() throws Exception {
         //************************
         //          Given
         //************************
         RedisServer redisServer = new RedisServer();
         RedisAddress redisAddress = redisServer.startSingleInstance();
-        RedUtilsLockImpl redUtilsLock = new RedUtilsLockImpl(redisAddress.masterHostAddress, redisAddress.masterPort);
+        RedUtilsConfig redUtilsConfig = new RedUtilsConfig.RedUtilsConfigBuilder()
+                .hostAddress(redisAddress.masterHostAddress)
+                .port(redisAddress.masterPort)
+                .leaseTimeMillis(10_000)
+                .build();
 
+        RedUtilsLockImpl redUtilsLock = new RedUtilsLockImpl(redUtilsConfig);
         AtomicBoolean firstThreadTryToGetLock = new AtomicBoolean(false);
-
         AtomicReference<Throwable> raisedException = new AtomicReference<>();
-
 
         //************************
         //          WHEN
@@ -137,7 +140,7 @@ class RedUtilsLockImplTest extends AbstractBaseTest {
 
         Awaitility.await("check first thread can get the lock").untilTrue(firstThreadTryToGetLock);
 
-        redisServer.shutdownMaster();
+        redisServer.pauseMaster(60);
 
         //************************
         //          THEN
@@ -352,14 +355,14 @@ class RedUtilsLockImplTest extends AbstractBaseTest {
         //          WHEN
         //************************
         redUtilsLock.acquire("lock1", () -> {
-            sleepSeconds(2);
+            sleepSeconds(1);
             tryToGetLock.set(true);
         });
 
         tryToGetLock.set(false);
 
         redUtilsLock.acquire("lock1", () -> {
-            sleepSeconds(2);
+            sleepSeconds(1);
             tryToGetLock.set(true);
         });
 
@@ -372,7 +375,7 @@ class RedUtilsLockImplTest extends AbstractBaseTest {
     }
 
     @Test
-    void test_acquire_WHEN_single_client_AND_multiple_threads_process_the_same_resource_we_SHOULD_get_correct_result() throws Exception {
+    void test_acquire_WHEN_single_client_AND_multiple_threads_process_the_same_resource_THEN_we_SHOULD_get_correct_result() throws Exception {
         //************************
         //          Given
         //************************
@@ -406,7 +409,7 @@ class RedUtilsLockImplTest extends AbstractBaseTest {
     }
 
     @Test
-    void test_acquire_WHEN_multiple_client_AND_multiple_threads_process_the_same_resource_we_SHOULD_get_correct_result() throws Exception {
+    void test_acquire_WHEN_multiple_client_AND_multiple_threads_process_the_same_resource_THEN_we_SHOULD_get_correct_result() throws Exception {
         //************************
         //          Given
         //************************
@@ -485,7 +488,14 @@ class RedUtilsLockImplTest extends AbstractBaseTest {
         final int replicaCount = 3;
         RedisServer redisServer = new RedisServer();
         RedisAddress redisAddress = redisServer.startMasterReplicas(replicaCount);
-        RedUtilsLockImpl redUtilsLock = new RedUtilsLockImpl(redisAddress.masterHostAddress, redisAddress.masterPort, replicaCount);
+        RedUtilsConfig redUtilsConfig = new RedUtilsConfig.RedUtilsConfigBuilder()
+                .hostAddress(redisAddress.masterHostAddress)
+                .port(redisAddress.masterPort)
+                .replicaCount(replicaCount)
+                .leaseTimeMillis(10_000)
+                .build();
+
+        RedUtilsLockImpl redUtilsLock = new RedUtilsLockImpl(redUtilsConfig);
 
         AtomicBoolean firstThreadTryToGetLock = new AtomicBoolean(false);
         AtomicReference<Throwable> raisedException = new AtomicReference<>();
@@ -524,7 +534,6 @@ class RedUtilsLockImplTest extends AbstractBaseTest {
         Assertions.assertTrue(runningFirstThreadFuture.isCompletedExceptionally());
         Assertions.assertTrue(raisedException.get() instanceof RefreshLockException);
     }
-
 
     private String getKey(String key) {
         return JEDIS.get(key);

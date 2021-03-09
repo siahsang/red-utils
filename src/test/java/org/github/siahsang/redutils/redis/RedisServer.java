@@ -22,7 +22,7 @@ public class RedisServer {
                 .withFileFromPath(".", RESOURCE_PATH);
     }
 
-    public final static int DEFAULT_MASTER_PORT = 6379;
+    public final static int DEFAULT_CONTAINER_MASTER_PORT = 6379;
 
     private GenericContainer<?> redisContainer;
 
@@ -44,14 +44,14 @@ public class RedisServer {
 
         Integer[] exposedPorts = new Integer[1 + replicaCount];
 
-        exposedPorts[0] = DEFAULT_MASTER_PORT;
+        exposedPorts[0] = DEFAULT_CONTAINER_MASTER_PORT;
 
         for (int i = 1; i <= replicaCount; i++) {
-            exposedPorts[i] = DEFAULT_MASTER_PORT + i;
+            exposedPorts[i] = DEFAULT_CONTAINER_MASTER_PORT + i;
         }
 
         redisContainer = new GenericContainer(buildImageDockerfile())
-                .withEnv("MASTER_PORT", String.valueOf(DEFAULT_MASTER_PORT))
+                .withEnv("MASTER_PORT", String.valueOf(DEFAULT_CONTAINER_MASTER_PORT))
                 .withEnv("REPLICAS", String.valueOf(replicaCount))
                 .withEnv("AOF", enableAOFStr)
                 .withEnv("AOF_CONFIG", AOFConfig.value)
@@ -67,7 +67,7 @@ public class RedisServer {
     }
 
     public void shutdownMaster() throws IOException, InterruptedException {
-        redisContainer.execInContainer("redis-cli", "-p", String.valueOf(DEFAULT_MASTER_PORT), "SHUTDOWN");
+        redisContainer.execInContainer("redis-cli", "-p", String.valueOf(DEFAULT_CONTAINER_MASTER_PORT), "SHUTDOWN");
     }
 
     public void shutdownReplica(final int replicaNumber) throws IOException, InterruptedException {
@@ -79,6 +79,15 @@ public class RedisServer {
         redisContainer.execInContainer("redis-cli", "-p", String.valueOf(exposedPorts.get(port)), "SHUTDOWN");
     }
 
+    public void pauseMaster(final int seconds) throws IOException, InterruptedException {
+        List<Integer> exposedPorts = redisContainer.getExposedPorts();
+        final String pauseTimeInMillis = String.valueOf(seconds * 1000);
+        log.info("Pausing Master for [{}] second(s)", seconds);
+        redisContainer.execInContainer("redis-cli", "-p",
+                String.valueOf(exposedPorts.get(0)), "CLIENT", "PAUSE", pauseTimeInMillis);
+    }
+
+
     public void pauseReplica(final int replicaNumber, final int seconds) throws IOException, InterruptedException {
         List<Integer> exposedPorts = redisContainer.getExposedPorts();
         raiseExceptionIfNoReplicaAvailable();
@@ -89,6 +98,7 @@ public class RedisServer {
         redisContainer.execInContainer("redis-cli", "-p",
                 String.valueOf(exposedPorts.get(port)), "CLIENT", "PAUSE", pauseTimeInMillis);
     }
+
 
     private void raiseExceptionIfNoReplicaAvailable() {
         List<Integer> exposedPorts = redisContainer.getExposedPorts();

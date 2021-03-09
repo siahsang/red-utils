@@ -22,9 +22,6 @@ public interface LuaScript {
     String RELEASE_LOCK = "if redis.call('get',KEYS[1]) == ARGV[1] then " +
                           "    return redis.call('del', KEYS[1]) " +
                           "else " +
-                          "    return NOT_OK " +
+                          "    return 'NOT_OK' " +
                           "end";
-
-  String REFRESH_LOCK = "return redis.call('PEXPIRE', KEYS[1], ARGV[1])";
-
 }

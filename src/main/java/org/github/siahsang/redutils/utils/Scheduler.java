@@ -20,6 +20,7 @@ public class Scheduler {
                 operationCallBack.doOperation();
             } catch (Exception exception) {
                 completableFuture.completeExceptionally(exception);
+                throw exception;
             }
 
         }, initialDelay, delay, unit);

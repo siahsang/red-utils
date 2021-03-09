@@ -1,4 +1,4 @@
-package org.github.siahsang.redutils.channel;
+package org.github.siahsang.redutils.lock;
 
 /**
  * @author Javad Alimohammadi<bs.alimohammadi@gmail.com>

@@ -1,7 +1,5 @@
 package org.github.siahsang.redutils.common;
 
-import org.github.siahsang.redutils.OperationCallBack;
-
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;

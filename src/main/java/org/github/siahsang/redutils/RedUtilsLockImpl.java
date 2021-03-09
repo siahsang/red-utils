@@ -1,10 +1,10 @@
 package org.github.siahsang.redutils;
 
 import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
-import org.github.siahsang.redutils.channel.JedisLockChannel;
-import org.github.siahsang.redutils.channel.LockChannel;
-import org.github.siahsang.redutils.common.RedUtilsConfig;
-import org.github.siahsang.redutils.common.ResourcePoolFactory;
+import org.github.siahsang.redutils.lock.JedisLockChannel;
+import org.github.siahsang.redutils.lock.JedisLockRefresher;
+import org.github.siahsang.redutils.lock.LockChannel;
+import org.github.siahsang.redutils.common.*;
 import org.github.siahsang.redutils.replica.ReplicaManager;
 import org.github.siahsang.redutils.replica.ReplicaManagerImpl;
 import org.slf4j.Logger;
@@ -30,7 +30,7 @@ public class RedUtilsLockImpl implements RedUtilsLock {
 
     private final JedisPool lockConnectionPool;
 
-    private final LockRefresher lockRefresher;
+    private final JedisLockRefresher lockRefresher;
 
     private final LockChannel lockChannel;
 
@@ -86,7 +86,7 @@ public class RedUtilsLockImpl implements RedUtilsLock {
                 redUtilsConfig.getWaitingTimeForReplicasMillis(),
                 redUtilsConfig.getRetryCountForSyncingWithReplicas()
         );
-        this.lockRefresher = new LockRefresher(redUtilsConfig.getLeaseTimeMillis(), replicaManager);
+        this.lockRefresher = new JedisLockRefresher(redUtilsConfig.getLeaseTimeMillis(), replicaManager);
 
     }
 

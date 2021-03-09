@@ -1,8 +1,8 @@
-package org.github.siahsang.redutils;
+package org.github.siahsang.redutils.lock;
 
+import org.github.siahsang.redutils.common.Scheduler;
 import org.github.siahsang.redutils.exception.RefreshLockException;
 import org.github.siahsang.redutils.replica.ReplicaManager;
-import org.github.siahsang.redutils.common.Scheduler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import redis.clients.jedis.Jedis;
@@ -14,8 +14,8 @@ import java.util.concurrent.*;
  * @author Javad Alimohammadi<bs.alimohammadi@gmail.com>
  */
 
-public class LockRefresher {
-    private static final Logger log = LoggerFactory.getLogger(LockRefresher.class);
+public class JedisLockRefresher implements LockRefresher {
+    private static final Logger log = LoggerFactory.getLogger(JedisLockRefresher.class);
 
     private final long refreshPeriodMillis;
 
@@ -23,12 +23,12 @@ public class LockRefresher {
 
     private final Map<String, LockExecutionInfo> locksHolder = new ConcurrentHashMap<>();
 
-    public LockRefresher(final long refreshPeriodMillis, final ReplicaManager replicaManager) {
+    public JedisLockRefresher(final long refreshPeriodMillis, final ReplicaManager replicaManager) {
         this.replicaManager = replicaManager;
         this.refreshPeriodMillis = refreshPeriodMillis;
     }
 
-
+    @Override
     public CompletableFuture<Void> start(final Jedis jedis, final String lockName) {
 
         locksHolder.computeIfAbsent(lockName, lName -> {
@@ -52,6 +52,7 @@ public class LockRefresher {
 
     }
 
+    @Override
     public void stop(final String lockName) {
         locksHolder.computeIfPresent(lockName, (lName, scheduledExecutorService) -> {
             scheduledExecutorService.scheduledExecutorService.shutdownNow();

@@ -1,4 +1,4 @@
-package org.github.siahsang.redutils.channel;
+package org.github.siahsang.redutils.lock;
 
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPubSub;
@@ -14,13 +14,13 @@ import java.util.concurrent.atomic.AtomicBoolean;
  *
  * @author Javad Alimohammadi<bs.alimohammadi@gmail.com>
  */
-public class RedisChannel {
+public class LockChannelInfo {
 
     private final AtomicBoolean hasNotification = new AtomicBoolean(false);
 
     private final Semaphore notificationResource = new Semaphore(0);
 
-    private final ChannelListener channelListener = new ChannelListener(this);
+    private final ChannelListener channelListener = new ChannelListener();
 
     private final ExecutorService executorService = Executors.newSingleThreadExecutor();
 
@@ -28,7 +28,7 @@ public class RedisChannel {
 
     private final String unlockedMessagePattern;
 
-    public RedisChannel(final String channelName, final Jedis jedis, final String unlockedMessagePattern) {
+    public LockChannelInfo(final String channelName, final Jedis jedis, final String unlockedMessagePattern) {
         this.jedis = jedis;
         this.unlockedMessagePattern = unlockedMessagePattern;
 
@@ -47,17 +47,11 @@ public class RedisChannel {
 
         boolean acquireNotificationRecourse = notificationResource.tryAcquire(timeOutMillis, TimeUnit.MILLISECONDS);
 
-        // if true, this means we got a new message from channel and we consumed it
+        // if true, this means we got a new message from the channel and we consumed it
         if (acquireNotificationRecourse) {
             hasNotification.set(false);
         }
 
-    }
-
-    public void sendNotification() {
-        if (hasNotification.compareAndSet(false, true)) {
-            notificationResource.release();
-        }
     }
 
     public void shutdown() {
@@ -66,18 +60,18 @@ public class RedisChannel {
         jedis.close();
     }
 
-    private static class ChannelListener extends JedisPubSub {
-
-        private final RedisChannel redisChannel;
-
-        private ChannelListener(RedisChannel redisChannel) {
-            this.redisChannel = redisChannel;
+    private void sendNotification() {
+        if (hasNotification.compareAndSet(false, true)) {
+            notificationResource.release();
         }
+    }
+
+    private final class ChannelListener extends JedisPubSub {
 
         @Override
         public void onMessage(String channel, String message) {
-            if (message.startsWith(redisChannel.unlockedMessagePattern)) {
-                redisChannel.sendNotification();
+            if (message.startsWith(unlockedMessagePattern)) {
+                sendNotification();
             }
         }
     }

@@ -1,4 +1,4 @@
-package org.github.siahsang.redutils;
+package org.github.siahsang.redutils.common;
 
 import java.util.Objects;
 
@@ -6,7 +6,7 @@ import java.util.Objects;
  * @author Javad Alimohammadi<bs.alimohammadi@gmail.com>
  */
 
-enum RedisResponse {
+public enum RedisResponse {
     /**
      * Ok response from redis
      */

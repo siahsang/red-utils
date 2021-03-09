@@ -1,4 +1,4 @@
-package org.github.siahsang.redutils.channel;
+package org.github.siahsang.redutils.lock;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,7 +34,7 @@ public class JedisLockChannel implements LockChannel {
             final long threadId = Thread.currentThread().getId();
             if (channelInfo == null) {
                 Jedis jedis = connectionPool.getResource();
-                channelInfo = new ChannelInfo(new RedisChannel(lockName, jedis, unlockedMessagePattern));
+                channelInfo = new ChannelInfo(new LockChannelInfo(lockName, jedis, unlockedMessagePattern));
             }
             channelInfo.addSubscriber(threadId);
 
@@ -52,7 +52,7 @@ public class JedisLockChannel implements LockChannel {
         });
 
 
-        lockNameChannelInfo.get(lockName).redisChannel.waitForGettingNotificationFromChannel(timeOutMillis);
+        lockNameChannelInfo.get(lockName).lockChannelInfo.waitForGettingNotificationFromChannel(timeOutMillis);
     }
 
     @Override
@@ -66,7 +66,7 @@ public class JedisLockChannel implements LockChannel {
             // if all subscriber removed, it means we do not need to preserve channel
             lockNameChannelInfo.get(lockName).removeSubscriber(threadId);
             if (lockNameChannelInfo.get(lockName).isSubscribersEmpty()) {
-                lockNameChannelInfo.get(lockName).redisChannel.shutdown();
+                lockNameChannelInfo.get(lockName).lockChannelInfo.shutdown();
                 return null;
             }
 
@@ -76,13 +76,13 @@ public class JedisLockChannel implements LockChannel {
 
 
     private static class ChannelInfo {
-        private final RedisChannel redisChannel;
+        private final LockChannelInfo lockChannelInfo;
 
         private final Set<Long> subscribers = new HashSet<>();
 
 
-        private ChannelInfo(RedisChannel redisChannel) {
-            this.redisChannel = redisChannel;
+        private ChannelInfo(LockChannelInfo lockChannelInfo) {
+            this.lockChannelInfo = lockChannelInfo;
         }
 
         private void addSubscriber(Long id) {

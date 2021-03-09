@@ -13,6 +13,9 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <junit.version>5.7.0</junit.version>
         <java.version>1.8</java.version>
+        <awaitility.version>4.0.3</awaitility.version>
+        <testcontainers.version>1.15.2</testcontainers.version>
+        <junit-jupiter.version>1.15.1</junit-jupiter.version>
     </properties>
 
     <dependencies>
@@ -47,24 +50,23 @@
         <dependency>
             <groupId>org.awaitility</groupId>
             <artifactId>awaitility</artifactId>
-            <version>4.0.3</version>
+            <version>${awaitility.version}</version>
             <scope>test</scope>
         </dependency>
 
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>testcontainers</artifactId>
-            <version>1.15.2</version>
+            <version>${testcontainers.version}</version>
             <scope>test</scope>
         </dependency>
 
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>junit-jupiter</artifactId>
-            <version>1.15.1</version>
+            <version>${junit-jupiter.version}</version>
             <scope>test</scope>
         </dependency>
-
 
 
     </dependencies>

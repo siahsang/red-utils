@@ -33,7 +33,7 @@ public class RedUtilsLockImpl implements RedUtilsLock {
 
     private final ReplicaManager replicaManager;
 
-    private RedUtilsConfig redUtilsConfig;
+    private final RedUtilsConfig redUtilsConfig;
 
     public RedUtilsLockImpl() {
         this(RedUtilsConfig.DEFAULT_HOST_ADDRESS, RedUtilsConfig.DEFAULT_PORT, 0);

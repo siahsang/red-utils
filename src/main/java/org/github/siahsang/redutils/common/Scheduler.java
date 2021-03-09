@@ -1,4 +1,4 @@
-package org.github.siahsang.redutils.utils;
+package org.github.siahsang.redutils.common;
 
 import org.github.siahsang.redutils.OperationCallBack;
 

@@ -1,8 +1,9 @@
 package org.github.siahsang.redutils;
 
 import org.awaitility.Awaitility;
+import org.github.siahsang.redutils.common.RedUtilsConfig;
 import org.github.siahsang.redutils.exception.RefreshLockException;
-import org.github.siahsang.redutils.exception.ReplicaException;
+import org.github.siahsang.redutils.exception.ReplicaIsDownException;
 import org.github.siahsang.redutils.redis.RedisAddress;
 import org.github.siahsang.redutils.redis.RedisServer;
 import org.junit.jupiter.api.AfterEach;
@@ -471,7 +472,7 @@ class RedUtilsLockImplTest extends AbstractBaseTest {
         //************************
         //          THEN
         //************************
-        Assertions.assertThrows(ReplicaException.class, () -> {
+        Assertions.assertThrows(ReplicaIsDownException.class, () -> {
             redUtilsLock.acquire("lock1", () -> {
                 sleepSeconds(10);
             });

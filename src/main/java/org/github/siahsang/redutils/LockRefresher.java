@@ -2,7 +2,7 @@ package org.github.siahsang.redutils;
 
 import org.github.siahsang.redutils.exception.RefreshLockException;
 import org.github.siahsang.redutils.replica.ReplicaManager;
-import org.github.siahsang.redutils.utils.Scheduler;
+import org.github.siahsang.redutils.common.Scheduler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import redis.clients.jedis.Jedis;

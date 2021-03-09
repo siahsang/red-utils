@@ -10,11 +10,11 @@ enum RedisResponse {
     /**
      * Ok response from redis
      */
-    OK("OK"),
+    SUCCESS("SUCCESS"),
     /**
      * NIL response from redis
      */
-    NOT_OK("NOT_OK");
+    FAIL("FAIL");
 
     final String val;
 
@@ -22,12 +22,12 @@ enum RedisResponse {
         this.val = val;
     }
 
-    public static boolean isOk(final String response) {
-        return OK.val.equalsIgnoreCase(response);
+    public static boolean isSuccessFull(final String response) {
+        return SUCCESS.val.equalsIgnoreCase(response);
     }
 
-    public static boolean isNotOK(Object response) {
-        return Objects.equals(RedisResponse.NOT_OK.val, response);
+    public static boolean isFailed(Object response) {
+        return Objects.equals(RedisResponse.FAIL.val, response);
     }
 
 

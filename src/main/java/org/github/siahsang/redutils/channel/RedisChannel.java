@@ -10,7 +10,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * This class hold information about subscribers and semaphore status for the channel
+ * This class hold information about subscribers for the channel
  *
  * @author Javad Alimohammadi<bs.alimohammadi@gmail.com>
  */
@@ -69,7 +69,6 @@ public class RedisChannel {
     private static class ChannelListener extends JedisPubSub {
 
         private final RedisChannel redisChannel;
-
 
         private ChannelListener(RedisChannel redisChannel) {
             this.redisChannel = redisChannel;

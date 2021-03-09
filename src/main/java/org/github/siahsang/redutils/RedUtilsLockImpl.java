@@ -1,9 +1,12 @@
 package org.github.siahsang.redutils;
 
 import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
+import org.github.siahsang.redutils.channel.JedisLockChannel;
 import org.github.siahsang.redutils.channel.LockChannel;
-import org.github.siahsang.redutils.pool.ResourcePoolManager;
+import org.github.siahsang.redutils.common.RedUtilsConfig;
+import org.github.siahsang.redutils.common.ResourcePoolFactory;
 import org.github.siahsang.redutils.replica.ReplicaManager;
+import org.github.siahsang.redutils.replica.ReplicaManagerImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import redis.clients.jedis.Jedis;
@@ -60,8 +63,8 @@ public class RedUtilsLockImpl implements RedUtilsLock {
 
     public RedUtilsLockImpl(RedUtilsConfig redUtilsConfig) {
         this.redUtilsConfig = redUtilsConfig;
-        GenericObjectPoolConfig<Jedis> lockPoolConfig = ResourcePoolManager.makePool(redUtilsConfig.getLockMaxPoolSize());
-        GenericObjectPoolConfig<Jedis> channelPoolConfig = ResourcePoolManager.makePool(redUtilsConfig.getChannelMaxPoolSize());
+        GenericObjectPoolConfig<Jedis> lockPoolConfig = ResourcePoolFactory.makePool(redUtilsConfig.getLockMaxPoolSize());
+        GenericObjectPoolConfig<Jedis> channelPoolConfig = ResourcePoolFactory.makePool(redUtilsConfig.getChannelMaxPoolSize());
         JedisPool channelConnectionPool = new JedisPool(
                 channelPoolConfig,
                 redUtilsConfig.getHostAddress(),
@@ -76,9 +79,9 @@ public class RedUtilsLockImpl implements RedUtilsLock {
                 redUtilsConfig.getReadTimeOutMillis()
         );
 
-        this.lockChannel = new LockChannel(channelConnectionPool, redUtilsConfig.getRedUtilsUnLockedMessagePattern());
+        this.lockChannel = new JedisLockChannel(channelConnectionPool, redUtilsConfig.getRedUtilsUnLockedMessagePattern());
 
-        this.replicaManager = new ReplicaManager(
+        this.replicaManager = new ReplicaManagerImpl(
                 redUtilsConfig.getReplicaCount(),
                 redUtilsConfig.getWaitingTimeForReplicasMillis(),
                 redUtilsConfig.getRetryCountForSyncingWithReplicas()
@@ -172,7 +175,7 @@ public class RedUtilsLockImpl implements RedUtilsLock {
 
         try {
             Object response = jedis.eval(LuaScript.GET_LOCK, 1, lockName, lockValue, String.valueOf(expirationTimeMillis));
-            if (RedisResponse.isNotOK(response)) {
+            if (RedisResponse.isFailed(response)) {
                 return false;
             }
             replicaManager.waitForReplicaResponse(jedis);

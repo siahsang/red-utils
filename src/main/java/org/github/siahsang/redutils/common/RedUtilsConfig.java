@@ -1,4 +1,4 @@
-package org.github.siahsang.redutils;
+package org.github.siahsang.redutils.common;
 
 /**
  * @author Javad Alimohammadi<bs.alimohammadi@gmail.com>
@@ -103,7 +103,7 @@ public class RedUtilsConfig {
 
         private String hostAddress = DEFAULT_HOST_ADDRESS;
 
-        public int port = DEFAULT_PORT;
+        private int port = DEFAULT_PORT;
 
         public RedUtilsConfig build() {
             return new RedUtilsConfig(this);

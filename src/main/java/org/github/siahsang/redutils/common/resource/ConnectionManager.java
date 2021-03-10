@@ -8,6 +8,8 @@ public interface ConnectionManager<T> {
 
     void free(String id);
 
+    boolean reserveOne(String id);
+
     T borrow(String id);
 
     void returnBack(String id, T connection);

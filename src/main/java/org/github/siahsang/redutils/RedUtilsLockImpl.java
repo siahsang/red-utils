@@ -91,7 +91,10 @@ public class RedUtilsLockImpl implements RedUtilsLock {
     @Override
     public boolean tryAcquire(final String lockName, final OperationCallBack operationCallBack) {
 
-        connectionManager.reserve(lockName,)
+        if (!connectionManager.reserveOne(lockName)) {
+            throw new RuntimeException("There is no any connection please wait or change connection properties");
+        }
+        Jedis jedis = connectionManager.borrow(lockName);
 
         boolean getLockSuccessfully = getLock(jedis, lockName, redUtilsConfig.getLeaseTimeMillis());
         LockRefresher lockRefresher = new JedisLockRefresher(redUtilsConfig, replicaManager, jedis);
@@ -116,10 +119,9 @@ public class RedUtilsLockImpl implements RedUtilsLock {
 
             return true;
         }
-    }
 
         return false;
-}
+    }
 
     @Override
     public void acquire(final String lockName, final OperationCallBack operationCallBack) {

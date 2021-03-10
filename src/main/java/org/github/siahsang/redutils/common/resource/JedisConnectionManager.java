@@ -63,6 +63,11 @@ public class JedisConnectionManager implements ConnectionManager<Jedis> {
     }
 
     @Override
+    public boolean reserveOne(final String id) {
+        return reserve(id, 1);
+    }
+
+    @Override
     public Jedis borrow(final String id) {
         List<Jedis> returnList = new ArrayList<>();
         reservedConnections.compute(id, (s, jedisList) -> {

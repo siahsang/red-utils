@@ -8,14 +8,14 @@ import redis.clients.jedis.Jedis;
  */
 
 public class ResourcePoolFactory {
-    public static GenericObjectPoolConfig<Jedis> makePool(final int maxThread) {
+    public static GenericObjectPoolConfig<Jedis> makePool(final int maxSize) {
         GenericObjectPoolConfig<Jedis> poolConfig = new GenericObjectPoolConfig<>();
         poolConfig.setTestWhileIdle(true);
         poolConfig.setMinEvictableIdleTimeMillis(60000);
         poolConfig.setTimeBetweenEvictionRunsMillis(30000);
         poolConfig.setNumTestsPerEvictionRun(-1);
 
-        poolConfig.setMaxTotal(maxThread);
+        poolConfig.setMaxTotal(maxSize);
 
         return poolConfig;
     }

@@ -1,5 +1,6 @@
 package org.github.siahsang.redutils.lock;
 
+import org.github.siahsang.redutils.common.RedUtilsConfig;
 import org.github.siahsang.redutils.common.Scheduler;
 import org.github.siahsang.redutils.exception.RefreshLockException;
 import org.github.siahsang.redutils.replica.ReplicaManager;
@@ -17,28 +18,34 @@ import java.util.concurrent.*;
 public class JedisLockRefresher implements LockRefresher {
     private static final Logger log = LoggerFactory.getLogger(JedisLockRefresher.class);
 
-    private final long refreshPeriodMillis;
+    private final RedUtilsConfig redUtilsConfig;
 
     private final ReplicaManager replicaManager;
 
+    private final Jedis jedis;
+
     private final Map<String, LockExecutionInfo> locksHolder = new ConcurrentHashMap<>();
 
-    public JedisLockRefresher(final long refreshPeriodMillis, final ReplicaManager replicaManager) {
+    public JedisLockRefresher(RedUtilsConfig redUtilsConfig, ReplicaManager replicaManager, Jedis jedis) {
+        this.redUtilsConfig = redUtilsConfig;
         this.replicaManager = replicaManager;
-        this.refreshPeriodMillis = refreshPeriodMillis;
+        this.jedis = jedis;
     }
 
     @Override
-    public CompletableFuture<Void> start(final Jedis jedis, final String lockName) {
+    public CompletableFuture<Void> start(final String lockName) {
 
         locksHolder.computeIfAbsent(lockName, lName -> {
+            final int refreshPeriodMillis = redUtilsConfig.getLeaseTimeMillis();
             ScheduledExecutorService executor = Executors.newScheduledThreadPool(1);
 
             CompletableFuture<Void> resultCompletableFuture = Scheduler.scheduleAtFixRate(executor, () -> {
                 try {
                     log.trace("Refreshing the lock [{}]", lockName);
                     jedis.pexpire(lockName, refreshPeriodMillis);
-                    replicaManager.waitForReplicaResponse(jedis);
+                    replicaManager.waitForResponse(redUtilsConfig.getReplicaCount(),
+                            redUtilsConfig.getWaitingTimeForReplicasMillis(),
+                            redUtilsConfig.getRetryCountForSyncingWithReplicas());
                 } catch (Exception ex) {
                     String errMSG = String.format("Error in refreshing the lock '%s'", lockName);
                     throw new RefreshLockException(errMSG, ex);

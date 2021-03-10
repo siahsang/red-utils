@@ -1,12 +1,14 @@
 package org.github.siahsang.redutils;
 
 import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
+import org.github.siahsang.redutils.common.*;
+import org.github.siahsang.redutils.common.resource.JedisConnectionManager;
 import org.github.siahsang.redutils.lock.JedisLockChannel;
 import org.github.siahsang.redutils.lock.JedisLockRefresher;
 import org.github.siahsang.redutils.lock.LockChannel;
-import org.github.siahsang.redutils.common.*;
+import org.github.siahsang.redutils.lock.LockRefresher;
+import org.github.siahsang.redutils.replica.JedisReplicaManager;
 import org.github.siahsang.redutils.replica.ReplicaManager;
-import org.github.siahsang.redutils.replica.ReplicaManagerImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import redis.clients.jedis.Jedis;
@@ -30,13 +32,13 @@ public class RedUtilsLockImpl implements RedUtilsLock {
 
     private final JedisPool lockConnectionPool;
 
-    private final JedisLockRefresher lockRefresher;
-
     private final LockChannel lockChannel;
 
     private final ReplicaManager replicaManager;
 
     private final RedUtilsConfig redUtilsConfig;
+
+    private final JedisConnectionManager connectionManager;
 
     public RedUtilsLockImpl() {
         this(RedUtilsConfig.DEFAULT_HOST_ADDRESS, RedUtilsConfig.DEFAULT_PORT, 0);
@@ -81,48 +83,43 @@ public class RedUtilsLockImpl implements RedUtilsLock {
 
         this.lockChannel = new JedisLockChannel(channelConnectionPool, redUtilsConfig.getRedUtilsUnLockedMessagePattern());
 
-        this.replicaManager = new ReplicaManagerImpl(
-                redUtilsConfig.getReplicaCount(),
-                redUtilsConfig.getWaitingTimeForReplicasMillis(),
-                redUtilsConfig.getRetryCountForSyncingWithReplicas()
-        );
-        this.lockRefresher = new JedisLockRefresher(redUtilsConfig.getLeaseTimeMillis(), replicaManager);
+        this.replicaManager = new JedisReplicaManager();
 
+        connectionManager = new JedisConnectionManager(redUtilsConfig);
     }
-
 
     @Override
     public boolean tryAcquire(final String lockName, final OperationCallBack operationCallBack) {
 
-        try (Jedis jedis = lockConnectionPool.getResource()) {
+        connectionManager.reserve(lockName,)
 
-            boolean getLockSuccessfully = getLock(jedis, lockName, redUtilsConfig.getLeaseTimeMillis());
+        boolean getLockSuccessfully = getLock(jedis, lockName, redUtilsConfig.getLeaseTimeMillis());
+        LockRefresher lockRefresher = new JedisLockRefresher(redUtilsConfig, replicaManager, jedis);
+        if (getLockSuccessfully) {
+            try {
+                CompletableFuture<Void> lockRefresherFuture = lockRefresher.start(lockName);
+                CompletableFuture<Void> mainOperationFuture = CompletableFuture.runAsync(operationCallBack::doOperation,
+                        operationExecutorService);
 
-            if (getLockSuccessfully) {
-                try {
-                    CompletableFuture<Void> lockRefresherFuture = lockRefresher.start(jedis, lockName);
-                    CompletableFuture<Void> mainOperationFuture = CompletableFuture.runAsync(operationCallBack::doOperation,
-                            operationExecutorService);
+                lockRefresherFuture.exceptionally(throwable -> {
+                    mainOperationFuture.completeExceptionally(throwable);
+                    return null;
+                });
 
-                    lockRefresherFuture.exceptionally(throwable -> {
-                        mainOperationFuture.completeExceptionally(throwable);
-                        return null;
-                    });
+                mainOperationFuture.join();
 
-                    mainOperationFuture.join();
-
-                } finally {
-                    lockRefresher.stop(lockName);
-                    tryReleaseLock(jedis, lockName);
-                    tryNotifyOtherClients(jedis, lockName);
-                }
-
-                return true;
+            } finally {
+                lockRefresher.stop(lockName);
+                tryReleaseLock(jedis, lockName);
+                tryNotifyOtherClients(jedis, lockName);
             }
+
+            return true;
         }
+    }
 
         return false;
-    }
+}
 
     @Override
     public void acquire(final String lockName, final OperationCallBack operationCallBack) {
@@ -149,8 +146,9 @@ public class RedUtilsLockImpl implements RedUtilsLock {
                 }
             }
 
+            LockRefresher lockRefresher = new JedisLockRefresher(redUtilsConfig, replicaManager, jedis);
             try {
-                CompletableFuture<Void> lockRefresherStatus = lockRefresher.start(jedis, lockName);
+                CompletableFuture<Void> lockRefresherStatus = lockRefresher.start(lockName);
                 CompletableFuture<Void> mainOperationFuture = CompletableFuture.runAsync(operationCallBack::doOperation,
                         operationExecutorService);
 
@@ -178,7 +176,7 @@ public class RedUtilsLockImpl implements RedUtilsLock {
             if (RedisResponse.isFailed(response)) {
                 return false;
             }
-            replicaManager.waitForReplicaResponse(jedis);
+            replicaManager.waitForResponse(jedis);
             return true;
         } catch (Exception exception) {
             releaseLock(jedis, lockName);

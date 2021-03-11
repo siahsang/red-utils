@@ -127,8 +127,11 @@ public class JedisConnectionManager implements ConnectionManager<Jedis> {
 
     @Override
     public <E> E doWithConnection(String id, Function<Jedis, E> operation) {
-        try (Jedis jedis = borrow(id)) {
+        Jedis jedis = borrow(id);
+        try {
             return operation.apply(jedis);
+        } finally {
+            returnBack(id, jedis);
         }
     }
 

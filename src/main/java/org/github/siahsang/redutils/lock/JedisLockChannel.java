@@ -35,7 +35,13 @@ public class JedisLockChannel implements LockChannel {
             final long threadId = Thread.currentThread().getId();
             if (channelInfo == null) {
                 Jedis jedis = jedisConnectionManager.borrow();
-                channelInfo = new ChannelInfo(new LockChannelInfo(lockName, jedis, unlockedMessagePattern));
+                LockChannelInfo lockChannelInfo = new LockChannelInfo(lockName, jedis, unlockedMessagePattern);
+
+                executorService.submit(() -> {
+                    jedis.subscribe(new ChannelListener(lockChannelInfo, unlockedMessagePattern), lockName);
+                });
+
+                channelInfo = new ChannelInfo(lockChannelInfo);
             }
             channelInfo.addSubscriber(threadId);
             return channelInfo;
@@ -97,4 +103,5 @@ public class JedisLockChannel implements LockChannel {
             return subscribers.isEmpty();
         }
     }
+
 }

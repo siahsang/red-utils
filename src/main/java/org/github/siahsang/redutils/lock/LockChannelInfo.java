@@ -61,7 +61,7 @@ public class LockChannelInfo {
         jedis.close();
     }
 
-    private void sendNotification() {
+    public void notifyMessage() {
         if (hasNotification.compareAndSet(false, true)) {
             notificationResource.release();
         }
@@ -72,7 +72,7 @@ public class LockChannelInfo {
         @Override
         public void onMessage(String channel, String message) {
             if (message.startsWith(unlockedMessagePattern)) {
-                sendNotification();
+                notifyMessage();
             }
         }
     }

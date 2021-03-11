@@ -8,5 +8,5 @@ import java.util.concurrent.CompletableFuture;
 public interface LockRefresher {
     CompletableFuture<Void> start(String lockName);
 
-    void stop(String lockName);
+    void tryStop(String lockName);
 }

@@ -35,6 +35,7 @@ public class LockChannelInfo {
         executorService.submit(() -> {
             jedis.subscribe(channelListener, channelName);
         });
+
     }
 
     /**

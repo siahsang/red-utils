@@ -21,7 +21,7 @@ public class RedUtilsConfig {
 
     private final int channelMaxPoolSize;
 
-    private final String redUtilsUnLockedMessagePattern;
+    private final String unlockedMessagePattern;
 
     private final int replicaCount;
 
@@ -36,7 +36,7 @@ public class RedUtilsConfig {
         this.readTimeOutMillis = redUtilsConfigBuilder.readTimeOutMillis;
         this.lockMaxPoolSize = redUtilsConfigBuilder.lockMaxPoolSize;
         this.channelMaxPoolSize = redUtilsConfigBuilder.channelMaxPoolSize;
-        this.redUtilsUnLockedMessagePattern = redUtilsConfigBuilder.redUtilsUnLockedMessage;
+        this.unlockedMessagePattern = redUtilsConfigBuilder.redUtilsUnLockedMessage;
         this.replicaCount = redUtilsConfigBuilder.replicaCount;
         this.hostAddress = redUtilsConfigBuilder.hostAddress;
         this.port = redUtilsConfigBuilder.port;
@@ -67,8 +67,8 @@ public class RedUtilsConfig {
         return channelMaxPoolSize;
     }
 
-    public String getRedUtilsUnLockedMessagePattern() {
-        return redUtilsUnLockedMessagePattern;
+    public String getUnlockedMessagePattern() {
+        return unlockedMessagePattern;
     }
 
     public int getReplicaCount() {

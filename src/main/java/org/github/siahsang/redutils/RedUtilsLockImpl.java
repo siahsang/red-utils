@@ -1,8 +1,11 @@
 package org.github.siahsang.redutils;
 
-import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
-import org.github.siahsang.redutils.common.*;
-import org.github.siahsang.redutils.common.resource.JedisConnectionManager;
+import org.github.siahsang.redutils.common.OperationCallBack;
+import org.github.siahsang.redutils.common.RedUtilsConfig;
+import org.github.siahsang.redutils.common.ThreadManager;
+import org.github.siahsang.redutils.common.connection.JedisConnectionManager;
+import org.github.siahsang.redutils.common.redis.LuaScript;
+import org.github.siahsang.redutils.common.redis.RedisResponse;
 import org.github.siahsang.redutils.lock.JedisLockChannel;
 import org.github.siahsang.redutils.lock.JedisLockRefresher;
 import org.github.siahsang.redutils.lock.LockChannel;
@@ -11,10 +14,7 @@ import org.github.siahsang.redutils.replica.JedisReplicaManager;
 import org.github.siahsang.redutils.replica.ReplicaManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import redis.clients.jedis.Jedis;
-import redis.clients.jedis.JedisPool;
 
-import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -22,15 +22,11 @@ import java.util.concurrent.Executors;
 /**
  * @author Javad Alimohammadi<bs.alimohammadi@gmail.com>
  */
-
+// todo : remove dependency to jedis
 public class RedUtilsLockImpl implements RedUtilsLock {
     private static final Logger log = LoggerFactory.getLogger(RedUtilsLockImpl.class);
 
     private final ExecutorService operationExecutorService = Executors.newCachedThreadPool();
-
-    private final String uuid = UUID.randomUUID().toString();
-
-    private final JedisPool lockConnectionPool;
 
     private final LockChannel lockChannel;
 
@@ -39,6 +35,8 @@ public class RedUtilsLockImpl implements RedUtilsLock {
     private final RedUtilsConfig redUtilsConfig;
 
     private final JedisConnectionManager connectionManager;
+
+    private final ThreadManager threadManager;
 
     public RedUtilsLockImpl() {
         this(RedUtilsConfig.DEFAULT_HOST_ADDRESS, RedUtilsConfig.DEFAULT_PORT, 0);
@@ -65,41 +63,25 @@ public class RedUtilsLockImpl implements RedUtilsLock {
 
     public RedUtilsLockImpl(RedUtilsConfig redUtilsConfig) {
         this.redUtilsConfig = redUtilsConfig;
-        GenericObjectPoolConfig<Jedis> lockPoolConfig = ResourcePoolFactory.makePool(redUtilsConfig.getLockMaxPoolSize());
-        GenericObjectPoolConfig<Jedis> channelPoolConfig = ResourcePoolFactory.makePool(redUtilsConfig.getChannelMaxPoolSize());
-        JedisPool channelConnectionPool = new JedisPool(
-                channelPoolConfig,
-                redUtilsConfig.getHostAddress(),
-                redUtilsConfig.getPort(),
-                redUtilsConfig.getReadTimeOutMillis()
-        );
-
-        this.lockConnectionPool = new JedisPool(
-                lockPoolConfig,
-                redUtilsConfig.getHostAddress(),
-                redUtilsConfig.getPort(),
-                redUtilsConfig.getReadTimeOutMillis()
-        );
-
-        this.lockChannel = new JedisLockChannel(channelConnectionPool, redUtilsConfig.getRedUtilsUnLockedMessagePattern());
-
-        this.replicaManager = new JedisReplicaManager();
-
-        connectionManager = new JedisConnectionManager(redUtilsConfig);
+        this.connectionManager = new JedisConnectionManager(redUtilsConfig);
+        this.lockChannel = new JedisLockChannel(connectionManager, redUtilsConfig.getUnlockedMessagePattern());
+        this.replicaManager = new JedisReplicaManager(connectionManager, redUtilsConfig.getReplicaCount(),
+                redUtilsConfig.getRetryCountForSyncingWithReplicas(), redUtilsConfig.getWaitingTimeForReplicasMillis());
+        this.threadManager = new ThreadManager();
     }
 
     @Override
     public boolean tryAcquire(final String lockName, final OperationCallBack operationCallBack) {
 
-        if (!connectionManager.reserveOne(lockName)) {
-            throw new RuntimeException("There is no any connection please wait or change connection properties");
+        if (!connectionManager.reserveOne()) {
+            throw new RuntimeException("There is no any connection, please try again or change connection configs");
         }
-        Jedis jedis = connectionManager.borrow(lockName);
 
-        boolean getLockSuccessfully = getLock(jedis, lockName, redUtilsConfig.getLeaseTimeMillis());
-        LockRefresher lockRefresher = new JedisLockRefresher(redUtilsConfig, replicaManager, jedis);
+        boolean getLockSuccessfully = getLock(lockName, redUtilsConfig.getLeaseTimeMillis());
+        LockRefresher lockRefresher = null;
         if (getLockSuccessfully) {
             try {
+                lockRefresher = new JedisLockRefresher(redUtilsConfig, replicaManager, connectionManager);
                 CompletableFuture<Void> lockRefresherFuture = lockRefresher.start(lockName);
                 CompletableFuture<Void> mainOperationFuture = CompletableFuture.runAsync(operationCallBack::doOperation,
                         operationExecutorService);
@@ -112,9 +94,10 @@ public class RedUtilsLockImpl implements RedUtilsLock {
                 mainOperationFuture.join();
 
             } finally {
-                lockRefresher.stop(lockName);
-                tryReleaseLock(jedis, lockName);
-                tryNotifyOtherClients(jedis, lockName);
+                lockRefresher.tryStop(lockName);
+                tryReleaseLock(lockName);
+                tryNotifyOtherClients(lockName);
+                connectionManager.free();
             }
 
             return true;
@@ -125,94 +108,100 @@ public class RedUtilsLockImpl implements RedUtilsLock {
 
     @Override
     public void acquire(final String lockName, final OperationCallBack operationCallBack) {
-        try (Jedis jedis = lockConnectionPool.getResource()) {
-            boolean getLockSuccessfully = getLock(jedis, lockName, redUtilsConfig.getLeaseTimeMillis());
+        if (!connectionManager.reserve(2)) {
+            throw new RuntimeException("There is no any connection, please try again or change connection configs");
+        }
 
-            if (!getLockSuccessfully) {
-                try {
-                    lockChannel.subscribe(lockName);
+        boolean getLockSuccessfully = getLock(lockName, redUtilsConfig.getLeaseTimeMillis());
 
-                    while (!getLockSuccessfully) {
-                        final long ttl = getTTL(jedis, lockName);
-                        if (ttl > 0) {
-                            lockChannel.waitForNotification(lockName, ttl);
-                        } else {
-                            getLockSuccessfully = getLock(jedis, lockName, redUtilsConfig.getLeaseTimeMillis());
-                        }
-                    }
-                } catch (InterruptedException ex) {
-                    Thread.currentThread().interrupt();
-                    throw new IllegalStateException("Interrupted");
-                } finally {
-                    lockChannel.unSubscribe(lockName);
-                }
-            }
-
-            LockRefresher lockRefresher = new JedisLockRefresher(redUtilsConfig, replicaManager, jedis);
+        if (!getLockSuccessfully) {
             try {
-                CompletableFuture<Void> lockRefresherStatus = lockRefresher.start(lockName);
-                CompletableFuture<Void> mainOperationFuture = CompletableFuture.runAsync(operationCallBack::doOperation,
-                        operationExecutorService);
+                lockChannel.subscribe(lockName);
 
-                lockRefresherStatus.exceptionally(throwable -> {
-                    mainOperationFuture.completeExceptionally(throwable);
-                    return null;
-                });
-
-                mainOperationFuture.join();
+                while (!getLockSuccessfully) {
+                    final long ttl = getTTL(lockName);
+                    if (ttl > 0) {
+                        lockChannel.waitForNotification(lockName, ttl);
+                    } else {
+                        getLockSuccessfully = getLock(lockName, redUtilsConfig.getLeaseTimeMillis());
+                    }
+                }
+            } catch (InterruptedException ex) {
+                Thread.currentThread().interrupt();
+                throw new IllegalStateException("Interrupted");
             } finally {
-                lockRefresher.stop(lockName);
-                tryReleaseLock(jedis, lockName);
-                tryNotifyOtherClients(jedis, lockName);
+                lockChannel.unSubscribe(lockName);
             }
+        }
+
+        // At this point we have the lock
+        LockRefresher lockRefresher = new JedisLockRefresher(redUtilsConfig, replicaManager, connectionManager);
+        try {
+            CompletableFuture<Void> lockRefresherStatus = lockRefresher.start(lockName);
+            CompletableFuture<Void> mainOperationFuture = CompletableFuture.runAsync(operationCallBack::doOperation,
+                    operationExecutorService);
+
+            lockRefresherStatus.exceptionally(throwable -> {
+                mainOperationFuture.completeExceptionally(throwable);
+                return null;
+            });
+
+            mainOperationFuture.join();
+        } finally {
+            lockRefresher.tryStop(lockName);
+            tryReleaseLock(lockName);
+            tryNotifyOtherClients(lockName);
+            connectionManager.free();
         }
     }
 
 
-    private boolean getLock(final Jedis jedis, final String lockName, final long expirationTimeMillis) {
+    private boolean getLock(final String lockName, final long expirationTimeMillis) {
 
-        final String lockValue = createLockValue();
+        final String lockValue = threadManager.generateUniqueValue();
 
         try {
-            Object response = jedis.eval(LuaScript.GET_LOCK, 1, lockName, lockValue, String.valueOf(expirationTimeMillis));
+            Object response = connectionManager.doWithConnection(jedis -> {
+                return jedis.eval(LuaScript.GET_LOCK, 1, lockName, lockValue, String.valueOf(expirationTimeMillis));
+            });
             if (RedisResponse.isFailed(response)) {
                 return false;
             }
-            replicaManager.waitForResponse(jedis);
+            replicaManager.waitForResponse(lockName);
             return true;
         } catch (Exception exception) {
-            releaseLock(jedis, lockName);
+            releaseLock(lockName);
             throw exception;
         }
 
     }
 
-    private void releaseLock(Jedis jedis, String lockName) {
-        String lockValue = createLockValue();
-        jedis.eval(LuaScript.RELEASE_LOCK, 1, lockName, lockValue);
+    private void releaseLock(String lockName) {
+        String lockValue = threadManager.generateUniqueValue();
+        connectionManager.doWithConnection(jedis -> {
+            return jedis.eval(LuaScript.RELEASE_LOCK, 1, lockName, lockValue);
+        });
+
     }
 
-    private void tryReleaseLock(Jedis jedis, String lockName) {
+    private void tryReleaseLock(String lockName) {
         try {
-            releaseLock(jedis, lockName);
+            releaseLock(lockName);
         } catch (Exception ex) {
             log.debug("Could not release lock [{}]", lockName);
         }
     }
 
-    private long getTTL(Jedis jedis, final String lockName) {
-        return jedis.pttl(lockName);
+    private long getTTL(final String lockName) {
+        return connectionManager.doWithConnection(jedis -> jedis.pttl(lockName));
     }
 
 
-    private String createLockValue() {
-        long threadId = Thread.currentThread().getId();
-        return threadId + ":" + uuid;
-    }
-
-    public void tryNotifyOtherClients(final Jedis jedis, final String lockName) {
+    public void tryNotifyOtherClients(final String lockName) {
         try {
-            jedis.publish(lockName, redUtilsConfig.getRedUtilsUnLockedMessagePattern());
+            connectionManager.doWithConnection(lockName, jedis -> {
+                return jedis.publish(lockName, redUtilsConfig.getUnlockedMessagePattern());
+            });
         } catch (Exception exception) {
             // nothing
             log.debug("Error in notify [{}] to other clients", lockName, exception);

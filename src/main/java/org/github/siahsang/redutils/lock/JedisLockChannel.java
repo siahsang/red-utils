@@ -1,9 +1,10 @@
 package org.github.siahsang.redutils.lock;
 
+import org.github.siahsang.redutils.common.connection.ConnectionManager;
+import org.github.siahsang.redutils.common.connection.JedisConnectionManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import redis.clients.jedis.Jedis;
-import redis.clients.jedis.JedisPool;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -21,10 +22,10 @@ public class JedisLockChannel implements LockChannel {
 
     private final String unlockedMessagePattern;
 
-    private final JedisPool connectionPool;
+    private final ConnectionManager<Jedis> jedisConnectionManager;
 
-    public JedisLockChannel(JedisPool connectionPool, final String unlockedMessagePattern) {
-        this.connectionPool = connectionPool;
+    public JedisLockChannel(JedisConnectionManager jedisConnectionManager, final String unlockedMessagePattern) {
+        this.jedisConnectionManager = jedisConnectionManager;
         this.unlockedMessagePattern = unlockedMessagePattern;
     }
 
@@ -33,11 +34,10 @@ public class JedisLockChannel implements LockChannel {
         lockNameChannelInfo.compute(lockName, (s, channelInfo) -> {
             final long threadId = Thread.currentThread().getId();
             if (channelInfo == null) {
-                Jedis jedis = connectionPool.getResource();
+                Jedis jedis = jedisConnectionManager.borrow();
                 channelInfo = new ChannelInfo(new LockChannelInfo(lockName, jedis, unlockedMessagePattern));
             }
             channelInfo.addSubscriber(threadId);
-
             return channelInfo;
         });
     }

@@ -1,4 +1,4 @@
-package org.github.siahsang.redutils.common;
+package org.github.siahsang.redutils.common.redis;
 
 import java.util.Objects;
 

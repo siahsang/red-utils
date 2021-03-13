@@ -6,8 +6,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import redis.clients.jedis.Jedis;
 
-import java.util.HashSet;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -18,7 +16,7 @@ public class JedisLockChannel implements LockChannel {
     private final Logger log = LoggerFactory.getLogger(JedisLockChannel.class);
 
 
-    private final ConcurrentHashMap<String, ChannelInfo> lockNameChannelInfo = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, ChannelListener> lockNameChannelInfo = new ConcurrentHashMap<>();
 
     private final String unlockedMessagePattern;
 
@@ -31,20 +29,15 @@ public class JedisLockChannel implements LockChannel {
 
     @Override
     public void subscribe(final String lockName) {
-        lockNameChannelInfo.compute(lockName, (s, channelInfo) -> {
+        lockNameChannelInfo.compute(lockName, (s, channelListener) -> {
             final long threadId = Thread.currentThread().getId();
-            if (channelInfo == null) {
-                Jedis jedis = jedisConnectionManager.borrow();
-                LockChannelInfo lockChannelInfo = new LockChannelInfo(lockName, jedis, unlockedMessagePattern);
-
-                executorService.submit(() -> {
-                    jedis.subscribe(new ChannelListener(lockChannelInfo, unlockedMessagePattern), lockName);
-                });
-
-                channelInfo = new ChannelInfo(lockChannelInfo);
+            if (channelListener == null) {
+                channelListener = new JedisChannelListener(unlockedMessagePattern, lockName, jedisConnectionManager);
+                channelListener.startListening();
             }
-            channelInfo.addSubscriber(threadId);
-            return channelInfo;
+
+            channelListener.addSubscriber(threadId);
+            return channelListener;
         });
     }
 
@@ -57,8 +50,7 @@ public class JedisLockChannel implements LockChannel {
             return redisChannel;
         });
 
-
-        lockNameChannelInfo.get(lockName).lockChannelInfo.waitForGettingNotificationFromChannel(timeOutMillis);
+        lockNameChannelInfo.get(lockName).waitForGettingNotificationFromChannel(timeOutMillis);
     }
 
     @Override
@@ -70,38 +62,14 @@ public class JedisLockChannel implements LockChannel {
                 throw new IllegalArgumentException("There isn`t any channel with name " + lockName);
             }
             // if all subscriber removed, it means we do not need to preserve channel
-            lockNameChannelInfo.get(lockName).removeSubscriber(threadId);
-            if (lockNameChannelInfo.get(lockName).isSubscribersEmpty()) {
-                lockNameChannelInfo.get(lockName).lockChannelInfo.shutdown();
+            redisChannel.removeSubscriber(threadId);
+            if (redisChannel.isSubscribersEmpty()) {
+                redisChannel.shutdown();
                 return null;
             }
 
             return redisChannel;
         });
-    }
-
-
-    private static class ChannelInfo {
-        private final LockChannelInfo lockChannelInfo;
-
-        private final Set<Long> subscribers = new HashSet<>();
-
-
-        private ChannelInfo(LockChannelInfo lockChannelInfo) {
-            this.lockChannelInfo = lockChannelInfo;
-        }
-
-        private void addSubscriber(Long id) {
-            subscribers.add(id);
-        }
-
-        private void removeSubscriber(Long id) {
-            subscribers.remove(id);
-        }
-
-        private boolean isSubscribersEmpty() {
-            return subscribers.isEmpty();
-        }
     }
 
 }

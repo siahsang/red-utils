@@ -26,6 +26,8 @@ public interface ConnectionManager<T> {
 
     void returnBack(String id, T connection);
 
+    void returnBack(T connection);
+
     <E> E doWithConnection(String id, Function<Jedis, E> operation);
 
     <E> E doWithConnection(Function<Jedis, E> operation);

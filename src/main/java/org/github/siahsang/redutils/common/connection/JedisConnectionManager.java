@@ -124,6 +124,12 @@ public class JedisConnectionManager implements ConnectionManager<Jedis> {
         });
     }
 
+    @Override
+    public void returnBack(Jedis connection) {
+        String connectionId = threadManager.generateUniqueValue();
+        returnBack(connectionId, connection);
+    }
+
 
     @Override
     public <E> E doWithConnection(String id, Function<Jedis, E> operation) {

@@ -36,8 +36,6 @@ public class RedUtilsLockImpl implements RedUtilsLock {
 
     private final JedisConnectionManager connectionManager;
 
-    private final ThreadManager threadManager;
-
     public RedUtilsLockImpl() {
         this(RedUtilsConfig.DEFAULT_HOST_ADDRESS, RedUtilsConfig.DEFAULT_PORT, 0);
     }
@@ -67,7 +65,7 @@ public class RedUtilsLockImpl implements RedUtilsLock {
         this.lockChannel = new JedisLockChannel(connectionManager, redUtilsConfig.getUnlockedMessagePattern());
         this.replicaManager = new JedisReplicaManager(connectionManager, redUtilsConfig.getReplicaCount(),
                 redUtilsConfig.getRetryCountForSyncingWithReplicas(), redUtilsConfig.getWaitingTimeForReplicasMillis());
-        this.threadManager = new ThreadManager();
+
     }
 
     @Override
@@ -158,7 +156,7 @@ public class RedUtilsLockImpl implements RedUtilsLock {
 
     private boolean getLock(final String lockName, final long expirationTimeMillis) {
 
-        final String lockValue = threadManager.generateUniqueValue();
+        final String lockValue = ThreadManager.getCurrentThreadName();
 
         try {
             Object response = connectionManager.doWithConnection(jedis -> {
@@ -167,7 +165,7 @@ public class RedUtilsLockImpl implements RedUtilsLock {
             if (RedisResponse.isFailed(response)) {
                 return false;
             }
-            replicaManager.waitForResponse(lockName);
+            replicaManager.waitForResponse();
             return true;
         } catch (Exception exception) {
             releaseLock(lockName);
@@ -177,7 +175,7 @@ public class RedUtilsLockImpl implements RedUtilsLock {
     }
 
     private void releaseLock(String lockName) {
-        String lockValue = threadManager.generateUniqueValue();
+        String lockValue = ThreadManager.getCurrentThreadName();
         connectionManager.doWithConnection(jedis -> {
             return jedis.eval(LuaScript.RELEASE_LOCK, 1, lockName, lockValue);
         });
@@ -199,7 +197,7 @@ public class RedUtilsLockImpl implements RedUtilsLock {
 
     public void tryNotifyOtherClients(final String lockName) {
         try {
-            connectionManager.doWithConnection(lockName, jedis -> {
+            connectionManager.doWithConnection(jedis -> {
                 return jedis.publish(lockName, redUtilsConfig.getUnlockedMessagePattern());
             });
         } catch (Exception exception) {

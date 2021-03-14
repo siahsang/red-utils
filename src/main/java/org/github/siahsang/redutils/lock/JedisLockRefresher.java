@@ -2,6 +2,7 @@ package org.github.siahsang.redutils.lock;
 
 import org.github.siahsang.redutils.common.RedUtilsConfig;
 import org.github.siahsang.redutils.common.Scheduler;
+import org.github.siahsang.redutils.common.ThreadManager;
 import org.github.siahsang.redutils.common.connection.ConnectionManager;
 import org.github.siahsang.redutils.exception.RefreshLockException;
 import org.github.siahsang.redutils.replica.ReplicaManager;
@@ -27,26 +28,28 @@ public class JedisLockRefresher implements LockRefresher {
 
     private final ConnectionManager<Jedis> jedisConnectionManager;
 
-    private ScheduledExecutorService executor;
+    private final ScheduledExecutorService executor;
 
-    public JedisLockRefresher(RedUtilsConfig redUtilsConfig, ReplicaManager replicaManager, ConnectionManager<Jedis> jedisConnectionManager) {
+    public JedisLockRefresher(RedUtilsConfig redUtilsConfig, ReplicaManager replicaManager,
+                              ConnectionManager<Jedis> jedisConnectionManager) {
         this.redUtilsConfig = redUtilsConfig;
         this.replicaManager = replicaManager;
         this.jedisConnectionManager = jedisConnectionManager;
+        this.executor = Executors.newScheduledThreadPool(1);
     }
 
     @Override
     public CompletableFuture<Void> start(final String lockName) {
-        executor = Executors.newScheduledThreadPool(1);
         final int refreshPeriodMillis = redUtilsConfig.getLeaseTimeMillis();
+        String connectionId = ThreadManager.getCurrentThreadName();
 
         return Scheduler.scheduleAtFixRate(executor, () -> {
             try {
                 log.trace("Refreshing the lock [{}]", lockName);
-                jedisConnectionManager.doWithConnection(jedis -> {
+                jedisConnectionManager.doWithConnection(connectionId, jedis -> {
                     return jedis.pexpire(lockName, refreshPeriodMillis);
                 });
-                replicaManager.waitForResponse(lockName);
+                replicaManager.waitForResponse();
             } catch (Exception ex) {
                 String errMSG = String.format("Error in refreshing the lock '%s'", lockName);
                 throw new RefreshLockException(errMSG, ex);

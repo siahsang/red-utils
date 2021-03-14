@@ -26,14 +26,10 @@ public class JedisConnectionManager implements ConnectionManager<Jedis> {
 
     private final JedisPool channelConnectionPool;
 
-    private final ThreadManager threadManager = new ThreadManager();
-
-
     public JedisConnectionManager(RedUtilsConfig redUtilsConfig) {
         this.maximumAllowedConnection.set(redUtilsConfig.getLockMaxPoolSize());
 
         GenericObjectPoolConfig<Jedis> lockPoolConfig = ConnectionPoolFactory.makePool(maximumAllowedConnection.get());
-
         this.channelConnectionPool = new JedisPool(lockPoolConfig,
                 redUtilsConfig.getHostAddress(),
                 redUtilsConfig.getPort(),
@@ -67,19 +63,14 @@ public class JedisConnectionManager implements ConnectionManager<Jedis> {
 
     @Override
     public boolean reserve(final int size) {
-        String connectionId = threadManager.generateUniqueValue();
+        String connectionId = ThreadManager.getCurrentThreadName();
         return reserve(connectionId, size);
     }
 
 
     @Override
-    public boolean reserveOne(final String id) {
-        return reserve(id, 1);
-    }
-
-    @Override
     public boolean reserveOne() {
-        String connectionId = threadManager.generateUniqueValue();
+        String connectionId = ThreadManager.getCurrentThreadName();
         return reserve(connectionId, 1);
     }
 
@@ -107,7 +98,7 @@ public class JedisConnectionManager implements ConnectionManager<Jedis> {
 
     @Override
     public Jedis borrow() {
-        String connectionId = threadManager.generateUniqueValue();
+        String connectionId = ThreadManager.getCurrentThreadName();
         return borrow(connectionId);
     }
 
@@ -126,7 +117,7 @@ public class JedisConnectionManager implements ConnectionManager<Jedis> {
 
     @Override
     public void returnBack(Jedis connection) {
-        String connectionId = threadManager.generateUniqueValue();
+        String connectionId = ThreadManager.getCurrentThreadName();
         returnBack(connectionId, connection);
     }
 
@@ -143,7 +134,7 @@ public class JedisConnectionManager implements ConnectionManager<Jedis> {
 
     @Override
     public <E> E doWithConnection(Function<Jedis, E> operation) {
-        String connectionId = threadManager.generateUniqueValue();
+        String connectionId = ThreadManager.getCurrentThreadName();
         return doWithConnection(connectionId, operation);
     }
 
@@ -167,7 +158,7 @@ public class JedisConnectionManager implements ConnectionManager<Jedis> {
 
     @Override
     public void free() {
-        String connectionId = threadManager.generateUniqueValue();
+        String connectionId = ThreadManager.getCurrentThreadName();
         free(connectionId);
     }
 }

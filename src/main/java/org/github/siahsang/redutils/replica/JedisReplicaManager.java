@@ -29,10 +29,10 @@ public class JedisReplicaManager implements ReplicaManager {
     }
 
     @Override
-    public void waitForResponse(final String lockName) {
+    public void waitForResponse() {
         if (replicaCount > 0) {
             int retry = 1;
-            long replicaResponseCount = jedisConnectionManager.doWithConnection(lockName, jedis -> {
+            long replicaResponseCount = jedisConnectionManager.doWithConnection(jedis -> {
                 return jedis.waitReplicas(replicaCount, waitingTimeMillis);
             });
 
@@ -40,7 +40,7 @@ public class JedisReplicaManager implements ReplicaManager {
             while (replicaResponseCount != replicaCount && retry <= retryCount) {
                 log.warn("Expected number of replica(s) is [{}] but available number of replica(s) is [{}], trying again({})",
                         replicaCount, replicaResponseCount, retry);
-                replicaResponseCount = jedisConnectionManager.doWithConnection(lockName, jedis -> {
+                replicaResponseCount = jedisConnectionManager.doWithConnection(jedis -> {
                     return jedis.waitReplicas(replicaCount, waitingTimeMillis);
                 });
                 retry++;

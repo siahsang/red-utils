@@ -88,7 +88,6 @@ class RedUtilsLockImplTest extends AbstractBaseTest {
                             firstThreadTryToGetLock.set(true);
                             sleepSeconds(5);
                         });
-
                     }
                 });
 
@@ -130,7 +129,7 @@ class RedUtilsLockImplTest extends AbstractBaseTest {
         CompletableFuture<Void> runningFirstThreadFuture = CompletableFuture.runAsync(() -> {
             redUtilsLock.tryAcquire("lock1", () -> {
                 firstThreadTryToGetLock.set(true);
-                sleepSeconds(60);
+                sleepSeconds(6000);
             });
         });
 
@@ -139,7 +138,7 @@ class RedUtilsLockImplTest extends AbstractBaseTest {
             return null;
         });
 
-        Awaitility.await("check first thread can get the lock").untilTrue(firstThreadTryToGetLock);
+        Awaitility.await("check first thread can get the lock").forever().untilTrue(firstThreadTryToGetLock);
 
         redisServer.pauseMaster(60);
 

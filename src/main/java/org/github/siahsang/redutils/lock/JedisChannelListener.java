@@ -53,7 +53,7 @@ public class JedisChannelListener extends ChannelListener {
 
     @Override
     public void startListening() {
-        this.jedisPubSub = new JedisPubSub() {
+        jedisPubSub = new JedisPubSub() {
             @Override
             public void onMessage(String channel, String message) {
                 if (message.startsWith(unlockedMessagePattern)) {

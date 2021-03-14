@@ -16,8 +16,6 @@ public interface ConnectionManager<T> {
 
     boolean reserve(int size);
 
-    boolean reserveOne(String id);
-
     boolean reserveOne();
 
     T borrow(String id);

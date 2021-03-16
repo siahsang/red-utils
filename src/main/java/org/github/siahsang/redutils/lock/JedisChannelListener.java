@@ -13,7 +13,7 @@ import java.util.concurrent.Executors;
  * @author Javad Alimohammadi<bs.alimohammadi@gmail.com>
  */
 public class JedisChannelListener extends ChannelListener {
-    private final Logger log = LoggerFactory.getLogger(JedisLockChannel.class);
+    private final Logger log = LoggerFactory.getLogger(JedisChannelListener.class);
 
     private final String unlockedMessagePattern;
 
@@ -39,13 +39,13 @@ public class JedisChannelListener extends ChannelListener {
         try {
             jedisPubSub.unsubscribe();
         } catch (Exception exception) {
-            log.debug("Error in unsubscribing channel " + channelName);
+            log.debug("Error in unsubscribing channel [{}]", channelName);
         }
 
         try {
             executorService.shutdownNow();
         } catch (Exception ex) {
-            log.debug("Error in shut-down channel " + channelName);
+            log.debug("Error in shut-down channel [{}]", channelName);
         }
 
         jedisConnectionManager.returnBack(jedis);

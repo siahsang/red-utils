@@ -5,25 +5,26 @@ package org.github.siahsang.redutils.common.redis;
  */
 
 public interface LuaScript {
-    // todo : use RedisResponse for returning value
     // @formatter:off
-     String GET_LOCK = "if redis.call('EXISTS', KEYS[1]) == 0 then " +
+     String GET_LOCK = String.format(
+                       "if redis.call('EXISTS', KEYS[1]) == 0 then " +
                        "    redis.call('SET', KEYS[1], ARGV[1], 'NX', 'PX', ARGV[2]) " +
-                       "    return 'SUCCESS'" +
+                       "    return '%s'" +
                        "elseif redis.call('GET', KEYS[1]) == ARGV[1] then " +
                        "    redis.call('EXPIRE', KEYS[1], ARGV[2]) " +
-                       "    return 'SUCCESS' " +
+                       "    return '%s' " +
                        "else " +
-                       "    return 'FAIL' "+
-                       "end ";
+                       "    return '%s' "+
+                       "end ", RedisResponse.SUCCESS, RedisResponse.SUCCESS, RedisResponse.FAIL);
 
 
 
 
-    String RELEASE_LOCK = "if redis.call('get',KEYS[1]) == ARGV[1] then " +
+    String RELEASE_LOCK = String.format(
+                          "if redis.call('get',KEYS[1]) == ARGV[1] then " +
                           "   redis.call('del', KEYS[1]) " +
-                          "   return 'SUCCESS' " +
+                          "   return '%s' " +
                           "else " +
-                          "    return 'FAIL' " +
-                          "end";
+                          "    return '%s' " +
+                          "end", RedisResponse.SUCCESS,  RedisResponse.FAIL);
 }

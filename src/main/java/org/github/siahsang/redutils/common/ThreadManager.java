@@ -1,25 +1,25 @@
 package org.github.siahsang.redutils.common;
 
 import java.util.UUID;
-import java.util.concurrent.ThreadFactory;
 
 /**
  * @author Javad Alimohammadi<bs.alimohammadi@gmail.com>
  */
-public class ThreadManager {
-    private final static String GENERATED_UUID = UUID.randomUUID().toString();
+public abstract class ThreadManager {
+    private static final InheritableThreadLocal<String> PARENT_THREAD_NAME = new InheritableThreadLocal<>();
 
-    public static String getCurrentThreadName() {
+    private static final String GENERATED_UUID = UUID.randomUUID().toString();
+
+    public static String createNewThreadName() {
         long threadId = Thread.currentThread().getId();
-        return threadId + ":" + GENERATED_UUID;
+        PARENT_THREAD_NAME.set(threadId + ":" + GENERATED_UUID);
+        return PARENT_THREAD_NAME.get();
     }
 
-    public static ThreadFactory threadFactory() {
-        return new ThreadFactory() {
-            @Override
-            public Thread newThread(Runnable r) {
-                return new Thread(new ThreadGroup(getCurrentThreadName()), r);
-            }
-        };
+    public static String getThreadName() {
+        System.out.println(PARENT_THREAD_NAME.get());
+        return PARENT_THREAD_NAME.get();
     }
+
+
 }

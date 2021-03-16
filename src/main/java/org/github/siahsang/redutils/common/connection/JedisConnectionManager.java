@@ -3,6 +3,8 @@ package org.github.siahsang.redutils.common.connection;
 import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
 import org.github.siahsang.redutils.common.RedUtilsConfig;
 import org.github.siahsang.redutils.common.ThreadManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 
@@ -19,6 +21,8 @@ import java.util.function.Function;
  * @author Javad Alimohammadi<bs.alimohammadi@gmail.com>
  */
 public class JedisConnectionManager implements ConnectionManager<Jedis> {
+    private static final Logger log = LoggerFactory.getLogger(JedisConnectionManager.class);
+
     private final AtomicInteger maximumAllowedConnection = new AtomicInteger(0);
 
     private final Map<String, List<Jedis>> reservedConnections = new ConcurrentHashMap<>();
@@ -55,6 +59,8 @@ public class JedisConnectionManager implements ConnectionManager<Jedis> {
             for (int i = 0; i < size; i++) {
                 Jedis resource = channelConnectionPool.getResource();
                 reservedConnections.get(id).add(resource);
+                log.debug("Reserved connection with id [{}] successfully.", id);
+                log.debug("Reserved connections {}", reservedConnections);
             }
         }
 
@@ -63,14 +69,14 @@ public class JedisConnectionManager implements ConnectionManager<Jedis> {
 
     @Override
     public boolean reserve(final int size) {
-        String connectionId = ThreadManager.getCurrentThreadName();
+        String connectionId = ThreadManager.createNewThreadName();
         return reserve(connectionId, size);
     }
 
 
     @Override
     public boolean reserveOne() {
-        String connectionId = ThreadManager.getCurrentThreadName();
+        String connectionId = ThreadManager.createNewThreadName();
         return reserve(connectionId, 1);
     }
 
@@ -98,7 +104,7 @@ public class JedisConnectionManager implements ConnectionManager<Jedis> {
 
     @Override
     public Jedis borrow() {
-        String connectionId = ThreadManager.getCurrentThreadName();
+        String connectionId = ThreadManager.getThreadName();
         return borrow(connectionId);
     }
 
@@ -117,7 +123,7 @@ public class JedisConnectionManager implements ConnectionManager<Jedis> {
 
     @Override
     public void returnBack(Jedis connection) {
-        String connectionId = ThreadManager.getCurrentThreadName();
+        String connectionId = ThreadManager.getThreadName();
         returnBack(connectionId, connection);
     }
 
@@ -134,7 +140,7 @@ public class JedisConnectionManager implements ConnectionManager<Jedis> {
 
     @Override
     public <E> E doWithConnection(Function<Jedis, E> operation) {
-        String connectionId = ThreadManager.getCurrentThreadName();
+        String connectionId = ThreadManager.getThreadName();
         return doWithConnection(connectionId, operation);
     }
 
@@ -151,14 +157,14 @@ public class JedisConnectionManager implements ConnectionManager<Jedis> {
             }
 
             jedisList.clear();
-
+            log.debug("Free connections for id [{}] successfully", id);
             return null;
         });
     }
 
     @Override
     public void free() {
-        String connectionId = ThreadManager.getCurrentThreadName();
+        String connectionId = ThreadManager.getThreadName();
         free(connectionId);
     }
 }

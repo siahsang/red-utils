@@ -156,7 +156,7 @@ public class RedUtilsLockImpl implements RedUtilsLock {
 
     private boolean getLock(final String lockName, final long expirationTimeMillis) {
 
-        final String lockValue = ThreadManager.getCurrentThreadName();
+        final String lockValue = ThreadManager.getThreadName();
 
         try {
             Object response = connectionManager.doWithConnection(jedis -> {
@@ -175,7 +175,7 @@ public class RedUtilsLockImpl implements RedUtilsLock {
     }
 
     private void releaseLock(String lockName) {
-        String lockValue = ThreadManager.getCurrentThreadName();
+        String lockValue = ThreadManager.getThreadName();
         connectionManager.doWithConnection(jedis -> {
             return jedis.eval(LuaScript.RELEASE_LOCK, 1, lockName, lockValue);
         });
@@ -186,7 +186,7 @@ public class RedUtilsLockImpl implements RedUtilsLock {
         try {
             releaseLock(lockName);
         } catch (Exception ex) {
-            log.debug("Could not release lock [{}]", lockName);
+            log.debug("Could not release lock [{}]", lockName, ex);
         }
     }
 

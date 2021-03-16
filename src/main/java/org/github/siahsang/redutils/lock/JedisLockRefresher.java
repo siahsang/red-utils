@@ -2,7 +2,6 @@ package org.github.siahsang.redutils.lock;
 
 import org.github.siahsang.redutils.common.RedUtilsConfig;
 import org.github.siahsang.redutils.common.Scheduler;
-import org.github.siahsang.redutils.common.ThreadManager;
 import org.github.siahsang.redutils.common.connection.ConnectionManager;
 import org.github.siahsang.redutils.exception.RefreshLockException;
 import org.github.siahsang.redutils.replica.ReplicaManager;
@@ -41,12 +40,11 @@ public class JedisLockRefresher implements LockRefresher {
     @Override
     public CompletableFuture<Void> start(final String lockName) {
         final int refreshPeriodMillis = redUtilsConfig.getLeaseTimeMillis();
-        String connectionId = ThreadManager.getCurrentThreadName();
 
         return Scheduler.scheduleAtFixRate(executor, () -> {
             try {
                 log.trace("Refreshing the lock [{}]", lockName);
-                jedisConnectionManager.doWithConnection(connectionId, jedis -> {
+                jedisConnectionManager.doWithConnection(jedis -> {
                     return jedis.pexpire(lockName, refreshPeriodMillis);
                 });
                 replicaManager.waitForResponse();

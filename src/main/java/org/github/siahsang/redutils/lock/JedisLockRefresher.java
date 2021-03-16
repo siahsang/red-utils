@@ -1,14 +1,18 @@
 package org.github.siahsang.redutils.lock;
 
+import org.github.siahsang.redutils.common.RedUtilsConfig;
 import org.github.siahsang.redutils.common.Scheduler;
+import org.github.siahsang.redutils.common.connection.ConnectionManager;
 import org.github.siahsang.redutils.exception.RefreshLockException;
 import org.github.siahsang.redutils.replica.ReplicaManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import redis.clients.jedis.Jedis;
 
-import java.util.Map;
-import java.util.concurrent.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author Javad Alimohammadi<bs.alimohammadi@gmail.com>
@@ -17,58 +21,47 @@ import java.util.concurrent.*;
 public class JedisLockRefresher implements LockRefresher {
     private static final Logger log = LoggerFactory.getLogger(JedisLockRefresher.class);
 
-    private final long refreshPeriodMillis;
+    private final RedUtilsConfig redUtilsConfig;
 
     private final ReplicaManager replicaManager;
 
-    private final Map<String, LockExecutionInfo> locksHolder = new ConcurrentHashMap<>();
+    private final ConnectionManager<Jedis> jedisConnectionManager;
 
-    public JedisLockRefresher(final long refreshPeriodMillis, final ReplicaManager replicaManager) {
+    private final ScheduledExecutorService executor;
+
+    public JedisLockRefresher(RedUtilsConfig redUtilsConfig, ReplicaManager replicaManager,
+                              ConnectionManager<Jedis> jedisConnectionManager) {
+        this.redUtilsConfig = redUtilsConfig;
         this.replicaManager = replicaManager;
-        this.refreshPeriodMillis = refreshPeriodMillis;
+        this.jedisConnectionManager = jedisConnectionManager;
+        this.executor = Executors.newScheduledThreadPool(1);
     }
 
     @Override
-    public CompletableFuture<Void> start(final Jedis jedis, final String lockName) {
+    public CompletableFuture<Void> start(final String lockName) {
+        final int refreshPeriodMillis = redUtilsConfig.getLeaseTimeMillis();
 
-        locksHolder.computeIfAbsent(lockName, lName -> {
-            ScheduledExecutorService executor = Executors.newScheduledThreadPool(1);
-
-            CompletableFuture<Void> resultCompletableFuture = Scheduler.scheduleAtFixRate(executor, () -> {
-                try {
-                    log.trace("Refreshing the lock [{}]", lockName);
-                    jedis.pexpire(lockName, refreshPeriodMillis);
-                    replicaManager.waitForReplicaResponse(jedis);
-                } catch (Exception ex) {
-                    String errMSG = String.format("Error in refreshing the lock '%s'", lockName);
-                    throw new RefreshLockException(errMSG, ex);
-                }
-            }, refreshPeriodMillis / 3, refreshPeriodMillis / 3, TimeUnit.MILLISECONDS);
-
-            return new LockExecutionInfo(executor, resultCompletableFuture);
-        });
-
-        return locksHolder.get(lockName).resultCompletableFuture;
-
+        return Scheduler.scheduleAtFixRate(executor, () -> {
+            try {
+                log.trace("Refreshing the lock [{}]", lockName);
+                jedisConnectionManager.doWithConnection(jedis -> {
+                    return jedis.pexpire(lockName, refreshPeriodMillis);
+                });
+                replicaManager.waitForResponse();
+            } catch (Exception ex) {
+                String errMSG = String.format("Error in refreshing the lock '%s'", lockName);
+                throw new RefreshLockException(errMSG, ex);
+            }
+        }, refreshPeriodMillis / 3, refreshPeriodMillis / 3, TimeUnit.MILLISECONDS);
     }
 
     @Override
-    public void stop(final String lockName) {
-        locksHolder.computeIfPresent(lockName, (lName, scheduledExecutorService) -> {
-            scheduledExecutorService.scheduledExecutorService.shutdownNow();
-            return null;
-        });
-    }
-
-    private static class LockExecutionInfo {
-        public final ScheduledExecutorService scheduledExecutorService;
-
-        public final CompletableFuture<Void> resultCompletableFuture;
-
-        public LockExecutionInfo(ScheduledExecutorService scheduledExecutorService,
-                                 CompletableFuture<Void> resultCompletableFuture) {
-            this.scheduledExecutorService = scheduledExecutorService;
-            this.resultCompletableFuture = resultCompletableFuture;
+    public void tryStop(final String lockName) {
+        try {
+            executor.shutdownNow();
+        } catch (Exception exception) {
+            log.debug("Error in stopping Refresher", exception);
         }
     }
+
 }

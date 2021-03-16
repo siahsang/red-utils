@@ -4,8 +4,8 @@ import org.awaitility.Awaitility;
 import org.github.siahsang.redutils.common.RedUtilsConfig;
 import org.github.siahsang.redutils.exception.RefreshLockException;
 import org.github.siahsang.redutils.exception.ReplicaIsDownException;
-import org.github.siahsang.redutils.redis.RedisAddress;
-import org.github.siahsang.redutils.redis.RedisServer;
+import org.github.siahsang.test.redis.RedisAddress;
+import org.github.siahsang.test.redis.RedisServer;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Disabled;
@@ -88,7 +88,6 @@ class RedUtilsLockImplTest extends AbstractBaseTest {
                             firstThreadTryToGetLock.set(true);
                             sleepSeconds(5);
                         });
-
                     }
                 });
 
@@ -139,7 +138,7 @@ class RedUtilsLockImplTest extends AbstractBaseTest {
             return null;
         });
 
-        Awaitility.await("check first thread can get the lock").untilTrue(firstThreadTryToGetLock);
+        Awaitility.await("check first thread can get the lock").forever().untilTrue(firstThreadTryToGetLock);
 
         redisServer.pauseMaster(60);
 
@@ -455,7 +454,7 @@ class RedUtilsLockImplTest extends AbstractBaseTest {
     }
 
     @Test
-    public void test_acquire_WHEN_one_of_replicas_is_unavailable_THEN_we_SHOULD_get_exception() throws Exception {
+    void test_acquire_WHEN_one_of_replicas_is_unavailable_THEN_we_SHOULD_get_exception() throws Exception {
         //************************
         //          Given
         //************************
@@ -482,7 +481,7 @@ class RedUtilsLockImplTest extends AbstractBaseTest {
     }
 
     @Test
-    public void test_acquire_WHEN_one_of_replicas_become_unavailable_after_getting_lock_THEN_we_SHOULD_get_exception() throws Exception {
+    void test_acquire_WHEN_one_of_replicas_become_unavailable_after_getting_lock_THEN_we_SHOULD_get_exception() throws Exception {
         //************************
         //          Given
         //************************
@@ -535,6 +534,7 @@ class RedUtilsLockImplTest extends AbstractBaseTest {
         Assertions.assertTrue(runningFirstThreadFuture.isCompletedExceptionally());
         Assertions.assertTrue(raisedException.get() instanceof RefreshLockException);
     }
+
 
     private String getKey(String key) {
         return JEDIS.get(key);

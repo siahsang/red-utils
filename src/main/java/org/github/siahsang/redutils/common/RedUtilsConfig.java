@@ -19,9 +19,7 @@ public class RedUtilsConfig {
 
     private final int lockMaxPoolSize;
 
-    private final int channelMaxPoolSize;
-
-    private final String redUtilsUnLockedMessagePattern;
+    private final String unlockedMessagePattern;
 
     private final int replicaCount;
 
@@ -34,9 +32,8 @@ public class RedUtilsConfig {
         this.retryCountForSyncingWithReplicas = redUtilsConfigBuilder.retryCountForSyncingWithReplicas;
         this.leaseTimeMillis = redUtilsConfigBuilder.leaseTimeMillis;
         this.readTimeOutMillis = redUtilsConfigBuilder.readTimeOutMillis;
-        this.lockMaxPoolSize = redUtilsConfigBuilder.lockMaxPoolSize;
-        this.channelMaxPoolSize = redUtilsConfigBuilder.channelMaxPoolSize;
-        this.redUtilsUnLockedMessagePattern = redUtilsConfigBuilder.redUtilsUnLockedMessage;
+        this.lockMaxPoolSize = redUtilsConfigBuilder.maxPoolSize;
+        this.unlockedMessagePattern = redUtilsConfigBuilder.redUtilsUnLockedMessage;
         this.replicaCount = redUtilsConfigBuilder.replicaCount;
         this.hostAddress = redUtilsConfigBuilder.hostAddress;
         this.port = redUtilsConfigBuilder.port;
@@ -63,12 +60,8 @@ public class RedUtilsConfig {
         return lockMaxPoolSize;
     }
 
-    public int getChannelMaxPoolSize() {
-        return channelMaxPoolSize;
-    }
-
-    public String getRedUtilsUnLockedMessagePattern() {
-        return redUtilsUnLockedMessagePattern;
+    public String getUnlockedMessagePattern() {
+        return unlockedMessagePattern;
     }
 
     public int getReplicaCount() {
@@ -93,9 +86,7 @@ public class RedUtilsConfig {
 
         private int readTimeOutMillis = 2000;
 
-        private int lockMaxPoolSize = 60;
-
-        private int channelMaxPoolSize = 51;
+        private int maxPoolSize = 60;
 
         private String redUtilsUnLockedMessage = "RED_UTILS_UN_LOCKED_";
 
@@ -129,13 +120,8 @@ public class RedUtilsConfig {
             return this;
         }
 
-        public RedUtilsConfigBuilder lockMaxPoolSize(int lockMaxPoolSize) {
-            this.lockMaxPoolSize = lockMaxPoolSize;
-            return this;
-        }
-
-        public RedUtilsConfigBuilder channelMaxPoolSize(int channelMaxPoolSize) {
-            this.channelMaxPoolSize = channelMaxPoolSize;
+        public RedUtilsConfigBuilder maxPoolSize(int lockMaxPoolSize) {
+            this.maxPoolSize = lockMaxPoolSize;
             return this;
         }
 

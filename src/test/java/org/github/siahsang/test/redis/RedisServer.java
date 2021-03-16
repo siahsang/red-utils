@@ -1,4 +1,4 @@
-package org.github.siahsang.redutils.redis;
+package org.github.siahsang.test.redis;
 
 import org.github.siahsang.redutils.RedUtilsLockImpl;
 import org.slf4j.Logger;

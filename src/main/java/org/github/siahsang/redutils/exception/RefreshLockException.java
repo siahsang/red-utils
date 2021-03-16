@@ -6,6 +6,6 @@ package org.github.siahsang.redutils.exception;
 
 public class RefreshLockException extends RuntimeException {
     public RefreshLockException(String msg, Throwable cause) {
-        super(cause);
+        super(msg,cause);
     }
 }

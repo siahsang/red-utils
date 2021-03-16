@@ -535,6 +535,7 @@ class RedUtilsLockImplTest extends AbstractBaseTest {
         Assertions.assertTrue(raisedException.get() instanceof RefreshLockException);
     }
 
+
     private String getKey(String key) {
         return JEDIS.get(key);
     }

@@ -3,7 +3,8 @@ package org.github.siahsang.redutils.common.connection;
 import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
 import org.github.siahsang.redutils.common.RedUtilsConfig;
 import org.github.siahsang.redutils.common.ThreadManager;
-import org.github.siahsang.redutils.exception.ConnectionManagerException;
+import org.github.siahsang.redutils.exception.BadRequestException;
+import org.github.siahsang.redutils.exception.InsufficientResourceException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import redis.clients.jedis.Jedis;
@@ -86,11 +87,11 @@ public class JedisConnectionManager implements ConnectionManager<Jedis> {
         List<Jedis> returnList = new ArrayList<>();
         reservedConnections.compute(resourceId, (s, jedisList) -> {
             if (Objects.isNull(jedisList)) {
-                throw new ConnectionManagerException("First you should reserve connection");
+                throw new BadRequestException(invalidResourceIdMessage(resourceId));
             }
 
             if (jedisList.isEmpty()) {
-                throw new ConnectionManagerException("There is no any free connection. Try later!");
+                throw new InsufficientResourceException("There is no any free connection. Try later!");
             }
 
             Jedis jedis = jedisList.remove(jedisList.size() - 1);
@@ -102,7 +103,6 @@ public class JedisConnectionManager implements ConnectionManager<Jedis> {
         return returnList.get(0);
     }
 
-
     @Override
     public Jedis borrow() {
         String connectionId = ThreadManager.getName();
@@ -113,7 +113,7 @@ public class JedisConnectionManager implements ConnectionManager<Jedis> {
     public void returnBack(final String resourceId, final Jedis connection) {
         reservedConnections.compute(resourceId, (s, jedisList) -> {
             if (Objects.isNull(jedisList)) {
-                throw new ConnectionManagerException("Invalid resource_id " + resourceId);
+                throw new BadRequestException(invalidResourceIdMessage(resourceId));
             }
             jedisList.add(connection);
             return jedisList;
@@ -155,7 +155,7 @@ public class JedisConnectionManager implements ConnectionManager<Jedis> {
     public void free(String resourceId) {
         reservedConnections.compute(resourceId, (s, jedisList) -> {
             if (Objects.isNull(jedisList)) {
-                throw new ConnectionManagerException("Invalid resource_id " + resourceId);
+                throw new BadRequestException(invalidResourceIdMessage(resourceId));
             }
 
             if (!jedisList.isEmpty()) {
@@ -172,5 +172,10 @@ public class JedisConnectionManager implements ConnectionManager<Jedis> {
     public void free() {
         String connectionId = ThreadManager.getName();
         free(connectionId);
+    }
+
+
+    private String invalidResourceIdMessage(String resourceId) {
+        return String.format("Invalid resource_id %s", resourceId);
     }
 }

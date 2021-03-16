@@ -2,7 +2,8 @@ package org.github.siahsang.redutils.common.connection;
 
 import org.github.siahsang.redutils.AbstractBaseTest;
 import org.github.siahsang.redutils.common.RedUtilsConfig;
-import org.github.siahsang.redutils.exception.ConnectionManagerException;
+import org.github.siahsang.redutils.exception.BadRequestException;
+import org.github.siahsang.redutils.exception.InsufficientResourceException;
 import org.github.siahsang.test.redis.RedisAddress;
 import org.github.siahsang.test.redis.RedisServer;
 import org.junit.jupiter.api.Assertions;
@@ -110,12 +111,34 @@ class JedisConnectionManagerTest extends AbstractBaseTest {
         jedisConnectionManager.borrow();
         jedisConnectionManager.borrow();
 
-        Assertions.assertThrows(ConnectionManagerException.class, () -> {
+        Assertions.assertThrows(InsufficientResourceException.class, () -> {
             jedisConnectionManager.borrow();
         });
 
     }
 
+
+    @Test
+    public void WHEN_get_connection_with_invalid_name_THEN_exception_SHOULD_be_thrown() throws Exception {
+        //************************
+        //          Given
+        //************************
+
+
+        //************************
+        //          WHEN
+        //************************
+        jedisConnectionManager.reserve(3);
+
+        //************************
+        //          THEN
+        //************************
+        Assertions.assertThrows(BadRequestException.class, () -> {
+            jedisConnectionManager.borrow("invalid_resource_id");
+        });
+
+
+    }
 
     @Test
     public void WHEN_get_connection_with_multiple_thread_THEN_capacity_SHOULD_be_set_accordingly() throws Exception {
@@ -165,4 +188,5 @@ class JedisConnectionManagerTest extends AbstractBaseTest {
         Assertions.assertEquals(1, jedisConnectionManager.remainingCapacity());
 
     }
+
 }

@@ -32,7 +32,7 @@ public class RedUtilsConfig {
         this.retryCountForSyncingWithReplicas = redUtilsConfigBuilder.retryCountForSyncingWithReplicas;
         this.leaseTimeMillis = redUtilsConfigBuilder.leaseTimeMillis;
         this.readTimeOutMillis = redUtilsConfigBuilder.readTimeOutMillis;
-        this.lockMaxPoolSize = redUtilsConfigBuilder.lockMaxPoolSize;
+        this.lockMaxPoolSize = redUtilsConfigBuilder.maxPoolSize;
         this.unlockedMessagePattern = redUtilsConfigBuilder.redUtilsUnLockedMessage;
         this.replicaCount = redUtilsConfigBuilder.replicaCount;
         this.hostAddress = redUtilsConfigBuilder.hostAddress;
@@ -86,7 +86,7 @@ public class RedUtilsConfig {
 
         private int readTimeOutMillis = 2000;
 
-        private int lockMaxPoolSize = 60;
+        private int maxPoolSize = 60;
 
         private String redUtilsUnLockedMessage = "RED_UTILS_UN_LOCKED_";
 
@@ -120,8 +120,8 @@ public class RedUtilsConfig {
             return this;
         }
 
-        public RedUtilsConfigBuilder lockMaxPoolSize(int lockMaxPoolSize) {
-            this.lockMaxPoolSize = lockMaxPoolSize;
+        public RedUtilsConfigBuilder maxPoolSize(int lockMaxPoolSize) {
+            this.maxPoolSize = lockMaxPoolSize;
             return this;
         }
 

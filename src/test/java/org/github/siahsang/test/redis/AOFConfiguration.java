@@ -1,4 +1,4 @@
-package org.github.siahsang.redutils.redis;
+package org.github.siahsang.test.redis;
 
 public enum AOFConfiguration {
     ALWAYS("always"), EVERY_SECOND("everysec"), NO("no");

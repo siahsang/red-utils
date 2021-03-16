@@ -21,10 +21,11 @@ import java.util.function.Function;
 /**
  * @author Javad Alimohammadi<bs.alimohammadi@gmail.com>
  */
+
 public class JedisConnectionManager implements ConnectionManager<Jedis> {
     private static final Logger log = LoggerFactory.getLogger(JedisConnectionManager.class);
 
-    private final AtomicInteger maximumAllowedConnection = new AtomicInteger(0);
+    private final AtomicInteger capacity = new AtomicInteger(0);
 
     private final Map<String, List<Jedis>> reservedConnections = new ConcurrentHashMap<>();
 
@@ -32,9 +33,9 @@ public class JedisConnectionManager implements ConnectionManager<Jedis> {
     private final JedisPool channelConnectionPool;
 
     public JedisConnectionManager(RedUtilsConfig redUtilsConfig) {
-        this.maximumAllowedConnection.set(redUtilsConfig.getLockMaxPoolSize());
+        this.capacity.set(redUtilsConfig.getLockMaxPoolSize());
 
-        GenericObjectPoolConfig<Jedis> lockPoolConfig = ConnectionPoolFactory.makePool(maximumAllowedConnection.get());
+        GenericObjectPoolConfig<Jedis> lockPoolConfig = ConnectionPoolFactory.makePool(capacity.get());
         this.channelConnectionPool = new JedisPool(lockPoolConfig,
                 redUtilsConfig.getHostAddress(),
                 redUtilsConfig.getPort(),
@@ -45,7 +46,7 @@ public class JedisConnectionManager implements ConnectionManager<Jedis> {
     @Override
     public boolean reserve(final String resourceId, final int size) {
         AtomicBoolean reservedSuccessfully = new AtomicBoolean(false);
-        maximumAllowedConnection.updateAndGet(operand -> {
+        capacity.updateAndGet(operand -> {
             if (operand - size >= 0) {
                 reservedSuccessfully.set(true);
                 return operand - size;
@@ -60,8 +61,7 @@ public class JedisConnectionManager implements ConnectionManager<Jedis> {
             for (int i = 0; i < size; i++) {
                 Jedis resource = channelConnectionPool.getResource();
                 reservedConnections.get(resourceId).add(resource);
-                log.debug("Reserved connection with resource_id [{}] successfully.", resourceId);
-                log.debug("Reserved connections {}", reservedConnections);
+                log.trace("Reserved connection with resource_id [{}] successfully.", resourceId);
             }
         }
 
@@ -115,11 +115,11 @@ public class JedisConnectionManager implements ConnectionManager<Jedis> {
             if (Objects.isNull(jedisList)) {
                 throw new ConnectionManagerException("Invalid resource_id " + resourceId);
             }
-
             jedisList.add(connection);
-
             return jedisList;
         });
+
+        capacity.incrementAndGet();
     }
 
     @Override
@@ -143,6 +143,11 @@ public class JedisConnectionManager implements ConnectionManager<Jedis> {
     public <E> E doWithConnection(Function<Jedis, E> operation) {
         String connectionId = ThreadManager.getName();
         return doWithConnection(connectionId, operation);
+    }
+
+    @Override
+    public int remainingCapacity() {
+        return capacity.get();
     }
 
 

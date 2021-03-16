@@ -129,7 +129,7 @@ class RedUtilsLockImplTest extends AbstractBaseTest {
         CompletableFuture<Void> runningFirstThreadFuture = CompletableFuture.runAsync(() -> {
             redUtilsLock.tryAcquire("lock1", () -> {
                 firstThreadTryToGetLock.set(true);
-                sleepSeconds(6000);
+                sleepSeconds(60);
             });
         });
 
@@ -454,7 +454,7 @@ class RedUtilsLockImplTest extends AbstractBaseTest {
     }
 
     @Test
-    public void test_acquire_WHEN_one_of_replicas_is_unavailable_THEN_we_SHOULD_get_exception() throws Exception {
+    void test_acquire_WHEN_one_of_replicas_is_unavailable_THEN_we_SHOULD_get_exception() throws Exception {
         //************************
         //          Given
         //************************
@@ -481,7 +481,7 @@ class RedUtilsLockImplTest extends AbstractBaseTest {
     }
 
     @Test
-    public void test_acquire_WHEN_one_of_replicas_become_unavailable_after_getting_lock_THEN_we_SHOULD_get_exception() throws Exception {
+    void test_acquire_WHEN_one_of_replicas_become_unavailable_after_getting_lock_THEN_we_SHOULD_get_exception() throws Exception {
         //************************
         //          Given
         //************************

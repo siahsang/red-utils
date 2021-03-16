@@ -2,8 +2,6 @@ package org.github.siahsang.redutils.lock;
 
 import org.github.siahsang.redutils.common.connection.ConnectionManager;
 import org.github.siahsang.redutils.common.connection.JedisConnectionManager;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import redis.clients.jedis.Jedis;
 
 import java.util.concurrent.ConcurrentHashMap;
@@ -13,8 +11,6 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 
 public class JedisLockChannel implements LockChannel {
-    private final Logger log = LoggerFactory.getLogger(JedisLockChannel.class);
-
 
     private final ConcurrentHashMap<String, ChannelListener> lockNameChannelInfo = new ConcurrentHashMap<>();
 

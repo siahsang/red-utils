@@ -7,7 +7,10 @@ import redis.clients.jedis.Jedis;
  * @author Javad Alimohammadi<bs.alimohammadi@gmail.com>
  */
 
-public class ConnectionPoolFactory {
+public abstract class ConnectionPoolFactory {
+    private ConnectionPoolFactory() {
+    }
+
     public static GenericObjectPoolConfig<Jedis> makePool(final int maxSize) {
         GenericObjectPoolConfig<Jedis> poolConfig = new GenericObjectPoolConfig<>();
         poolConfig.setTestWhileIdle(true);
@@ -19,7 +22,6 @@ public class ConnectionPoolFactory {
 
         return poolConfig;
     }
-
 
 
 }

@@ -6,6 +6,7 @@ import org.github.siahsang.redutils.common.ThreadManager;
 import org.github.siahsang.redutils.common.connection.JedisConnectionManager;
 import org.github.siahsang.redutils.common.redis.LuaScript;
 import org.github.siahsang.redutils.common.redis.RedisResponse;
+import org.github.siahsang.redutils.exception.InsufficientResourceException;
 import org.github.siahsang.redutils.lock.JedisLockChannel;
 import org.github.siahsang.redutils.lock.JedisLockRefresher;
 import org.github.siahsang.redutils.lock.LockChannel;
@@ -22,7 +23,6 @@ import java.util.concurrent.Executors;
 /**
  * @author Javad Alimohammadi<bs.alimohammadi@gmail.com>
  */
-// todo : remove dependency to jedis
 public class RedUtilsLockImpl implements RedUtilsLock {
     private static final Logger log = LoggerFactory.getLogger(RedUtilsLockImpl.class);
 
@@ -72,7 +72,7 @@ public class RedUtilsLockImpl implements RedUtilsLock {
     public boolean tryAcquire(final String lockName, final OperationCallBack operationCallBack) {
 
         if (!connectionManager.reserveOne()) {
-            throw new RuntimeException("There is no any connection, please try again or change connection configs");
+            throw new InsufficientResourceException("There is`t any available connection, please try again or change connection configs");
         }
 
         boolean getLockSuccessfully = getLock(lockName, redUtilsConfig.getLeaseTimeMillis());
@@ -107,7 +107,7 @@ public class RedUtilsLockImpl implements RedUtilsLock {
     @Override
     public void acquire(final String lockName, final OperationCallBack operationCallBack) {
         if (!connectionManager.reserve(2)) {
-            throw new RuntimeException("There is no any connection, please try again or change connection configs");
+            throw new InsufficientResourceException("There is`t any available connection, please try again or change connection configs");
         }
 
         boolean getLockSuccessfully = getLock(lockName, redUtilsConfig.getLeaseTimeMillis());
@@ -156,7 +156,7 @@ public class RedUtilsLockImpl implements RedUtilsLock {
 
     private boolean getLock(final String lockName, final long expirationTimeMillis) {
 
-        final String lockValue = ThreadManager.getThreadName();
+        final String lockValue = ThreadManager.getName();
 
         try {
             Object response = connectionManager.doWithConnection(jedis -> {
@@ -175,7 +175,7 @@ public class RedUtilsLockImpl implements RedUtilsLock {
     }
 
     private void releaseLock(String lockName) {
-        String lockValue = ThreadManager.getThreadName();
+        String lockValue = ThreadManager.getName();
         connectionManager.doWithConnection(jedis -> {
             return jedis.eval(LuaScript.RELEASE_LOCK, 1, lockName, lockValue);
         });

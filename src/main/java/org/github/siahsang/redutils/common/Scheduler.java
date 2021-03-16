@@ -8,9 +8,10 @@ import java.util.concurrent.TimeUnit;
  * @author Javad Alimohammadi<bs.alimohammadi@gmail.com>
  */
 
-public class Scheduler {
-    public static <T> CompletableFuture<T> scheduleAtFixRate(ScheduledExecutorService executor, OperationCallBack operationCallBack,
-                                                             final long initialDelay, final long delay, final TimeUnit unit) {
+public interface Scheduler {
+
+    static <T> CompletableFuture<T> scheduleAtFixRate(ScheduledExecutorService executor, OperationCallBack operationCallBack,
+                                                      final long initialDelay, final long delay, final TimeUnit unit) {
         CompletableFuture<T> completableFuture = new CompletableFuture<>();
 
         executor.scheduleAtFixedRate(() -> {

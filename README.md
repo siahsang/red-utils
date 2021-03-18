@@ -7,6 +7,7 @@
 <p align="center">
     <a href="http://www.apache.org/licenses/LICENSE-2.0"><img src="https://img.shields.io/badge/license-Apache%20License%202.0-blue.svg?style=flat" alt="license" title=""></a>
     <a href="https://travis-ci.com/github/siahsang/red-utils"><img src="https://travis-ci.com/siahsang/red-utils.svg?token=N599nN4MvyuvHP5RhDbq&branch=develop" alt="Build Status"></a>
+    <a href="https://app.codecov.io/gh/siahsang/red-utils"><img src="https://app.codecov.io/siahsang/red-utils/coverage.svg" alt="Code Coverage"></a>
 </p>
 
 

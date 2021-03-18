@@ -25,6 +25,7 @@ RUN cp /home/redis/src/redis-server /usr/local/bin/
 RUN cp /home/redis/src/redis-cli /usr/local/bin/
 
 COPY docker-entrypoint.sh /docker-entrypoint.sh
+RUN chmod 777 /docker-entrypoint.sh
 
 EXPOSE 6379
 ENTRYPOINT ["/docker-entrypoint.sh", "--protected-mode no"]

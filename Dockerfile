@@ -1,6 +1,6 @@
 FROM alpine:3.7
 
-LABEL maintainer="Javad Alimohammadi <bs.alimohammadi@gmail.com>"
+LABEL maintainer="Javad Alimohammadi "
 
 # Install system dependencies
 RUN apk update

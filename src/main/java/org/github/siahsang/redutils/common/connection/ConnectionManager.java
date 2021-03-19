@@ -5,7 +5,7 @@ import redis.clients.jedis.Jedis;
 import java.util.function.Function;
 
 /**
- * @author Javad Alimohammadi<bs.alimohammadi@gmail.com>
+ * @author Javad Alimohammadi
  */
 public interface ConnectionManager<T> {
     boolean reserve(String resourceId, int size);

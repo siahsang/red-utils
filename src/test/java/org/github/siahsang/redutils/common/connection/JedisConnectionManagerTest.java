@@ -13,7 +13,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import redis.clients.jedis.Jedis;
 
 /**
- * @author Javad Alimohammadi<bs.alimohammadi@gmail.com>
+ * @author Javad Alimohammadi
  */
 
 @Testcontainers

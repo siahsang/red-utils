@@ -1,7 +1,7 @@
 package org.github.siahsang.redutils.lock;
 
 /**
- * @author Javad Alimohammadi<bs.alimohammadi@gmail.com>
+ * @author Javad Alimohammadi
  */
 public interface LockChannel {
     void subscribe(String lockName);
@@ -11,7 +11,6 @@ public interface LockChannel {
      *
      * @param lockName
      * @param timeOutMillis
-     * @return
      * @throws InterruptedException
      */
     void waitForNotification(String lockName, long timeOutMillis) throws InterruptedException;

@@ -3,7 +3,7 @@ package org.github.siahsang.redutils.common;
 import java.util.UUID;
 
 /**
- * @author Javad Alimohammadi<bs.alimohammadi@gmail.com>
+ * @author Javad Alimohammadi
  */
 public abstract class ThreadManager {
     private ThreadManager() {

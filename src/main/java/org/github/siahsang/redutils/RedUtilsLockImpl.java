@@ -21,7 +21,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 /**
- * @author Javad Alimohammadi<bs.alimohammadi@gmail.com>
+ * @author Javad Alimohammadi
  */
 public class RedUtilsLockImpl implements RedUtilsLock {
     private static final Logger log = LoggerFactory.getLogger(RedUtilsLockImpl.class);
@@ -36,6 +36,9 @@ public class RedUtilsLockImpl implements RedUtilsLock {
 
     private final JedisConnectionManager connectionManager;
 
+    /**
+     * Start with default Redis configuration, host:127.0.0.1 and port:6379
+     */
     public RedUtilsLockImpl() {
         this(RedUtilsConfig.DEFAULT_HOST_ADDRESS, RedUtilsConfig.DEFAULT_PORT, 0);
     }
@@ -47,6 +50,8 @@ public class RedUtilsLockImpl implements RedUtilsLock {
     /**
      * Use with master-replica configuration
      *
+     * @param hostAddress server address of Redis
+     * @param port port number of Redis
      * @param replicaCount number of replica
      */
     public RedUtilsLockImpl(final String hostAddress, final int port, final int replicaCount) {
@@ -59,6 +64,10 @@ public class RedUtilsLockImpl implements RedUtilsLock {
         );
     }
 
+    /**
+     * To have more control on various configuration use this constructor
+     * @param redUtilsConfig various configuration parameter that can be set
+     */
     public RedUtilsLockImpl(RedUtilsConfig redUtilsConfig) {
         this.redUtilsConfig = redUtilsConfig;
         this.connectionManager = new JedisConnectionManager(redUtilsConfig);

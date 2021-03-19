@@ -10,7 +10,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 /**
- * @author Javad Alimohammadi<bs.alimohammadi@gmail.com>
+ * @author Javad Alimohammadi
  */
 public class JedisChannelListener extends ChannelListener {
     private final Logger log = LoggerFactory.getLogger(JedisChannelListener.class);

@@ -21,12 +21,19 @@
 ## Introduction ##
 RedUtils is a distributed lock and using Redis for storing and expiring locks with. It has the following feature:
 
--  **Leased-Based Lock** : If any clients crash or restarted abnormally, eventually lock will be free. 
--  **Safe** : Provided that fsync=always on every Redis instance we have safety even if Redis become unavailable after getting lock. 
--  **Auto-Refreshing Lock** : A lock that is acquired by the client can be held as long as the client is alive, and the connection is OK. 
+-  **Leased-Based Lock**: If any clients crash or restarted abnormally, eventually lock will be free. 
+-  **Safe**: Provided that fsync=always on every Redis instance we have safety even if Redis become unavailable after getting lock. 
+-  **Auto-Refreshing Lock**: A lock that is acquired by the client can be held as long as the client is alive, and the connection is OK. 
 
 
 ## Getting Started ##
 First add the following dependency (Java 8 is required)
+`
+`
 
+After that you can easily use it:
+
+```
+RedUtilsLockImpl redUtilsLock = new RedUtilsLockImpl();
+```
 

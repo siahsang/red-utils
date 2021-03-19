@@ -1,7 +1,7 @@
 package org.github.siahsang.redutils.exception;
 
 /**
- * @author Javad Alimohammadi<bs.alimohammadi@gmail.com>
+ * @author Javad Alimohammadi
  */
 
 public class RefreshLockException extends RuntimeException {

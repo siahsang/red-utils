@@ -3,7 +3,7 @@ package org.github.siahsang.redutils.lock;
 import java.util.concurrent.CompletableFuture;
 
 /**
- * @author Javad Alimohammadi<bs.alimohammadi@gmail.com>
+ * @author Javad Alimohammadi
  */
 public interface LockRefresher {
     CompletableFuture<Void> start(String lockName);

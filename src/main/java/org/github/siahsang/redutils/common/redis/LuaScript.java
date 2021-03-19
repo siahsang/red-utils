@@ -1,7 +1,7 @@
 package org.github.siahsang.redutils.common.redis;
 
 /**
- * @author Javad Alimohammadi<bs.alimohammadi@gmail.com>
+ * @author Javad Alimohammadi
  */
 
 public final class LuaScript {

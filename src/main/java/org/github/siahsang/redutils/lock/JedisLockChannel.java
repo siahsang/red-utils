@@ -7,7 +7,7 @@ import redis.clients.jedis.Jedis;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * @author Javad Alimohammadi<bs.alimohammadi@gmail.com>
+ * @author Javad Alimohammadi
  */
 
 public class JedisLockChannel implements LockChannel {

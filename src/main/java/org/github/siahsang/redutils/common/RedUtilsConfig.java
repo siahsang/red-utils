@@ -1,7 +1,7 @@
 package org.github.siahsang.redutils.common;
 
 /**
- * @author Javad Alimohammadi<bs.alimohammadi@gmail.com>
+ * @author Javad Alimohammadi
  */
 
 public class RedUtilsConfig {

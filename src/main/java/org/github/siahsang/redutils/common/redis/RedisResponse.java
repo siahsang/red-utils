@@ -3,7 +3,7 @@ package org.github.siahsang.redutils.common.redis;
 import java.util.Objects;
 
 /**
- * @author Javad Alimohammadi<bs.alimohammadi@gmail.com>
+ * @author Javad Alimohammadi
  */
 
 public enum RedisResponse {

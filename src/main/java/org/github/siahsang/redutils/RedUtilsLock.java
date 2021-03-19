@@ -3,7 +3,7 @@ package org.github.siahsang.redutils;
 import org.github.siahsang.redutils.common.OperationCallBack;
 
 /**
- * @author Javad Alimohammadi<bs.alimohammadi@gmail.com>
+ * @author Javad Alimohammadi
  */
 public interface RedUtilsLock {
     /**

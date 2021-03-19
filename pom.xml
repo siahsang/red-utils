@@ -172,11 +172,13 @@
                             <!-- If have a multi-module project and all of have same version you will be asked only
                             once for the release version and the next development version -->
                             <autoVersionSubmodules>true</autoVersionSubmodules>
-
+                            <releaseProfiles>release</releaseProfiles>
+                            <useReleaseProfile>false</useReleaseProfile>
                             <!--
                                 During release:perform, enable the "release" profile
                             -->
                             <releaseProfiles>release</releaseProfiles>
+                            <goals>deploy</goals>
                         </configuration>
                     </plugin>
                     <plugin>
@@ -184,7 +186,6 @@
                         <artifactId>maven-scm-plugin</artifactId>
                         <version>1.11.2</version>
                     </plugin>
-
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-gpg-plugin</artifactId>

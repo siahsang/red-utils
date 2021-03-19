@@ -461,7 +461,14 @@ class RedUtilsLockImplTest extends AbstractBaseTest {
         final int replicaCount = 3;
         RedisServer redisServer = new RedisServer();
         RedisAddress redisAddress = redisServer.startMasterReplicas(replicaCount);
-        RedUtilsLockImpl redUtilsLock = new RedUtilsLockImpl(redisAddress.masterHostAddress, redisAddress.masterPort, replicaCount);
+        RedUtilsConfig redUtilsConfig = new RedUtilsConfig.RedUtilsConfigBuilder()
+                .hostAddress(redisAddress.masterHostAddress)
+                .port(redisAddress.masterPort)
+                .replicaCount(replicaCount)
+                .leaseTimeMillis(10_000)
+                .build();
+
+        RedUtilsLockImpl redUtilsLock = new RedUtilsLockImpl(redUtilsConfig);
 
 
         //************************

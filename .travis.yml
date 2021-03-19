@@ -1,6 +1,6 @@
 language: java
-install: true
 jdk: openjdk8
+dist: focal
 
 script:
   - mvn clean package

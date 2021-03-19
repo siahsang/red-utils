@@ -27,13 +27,32 @@ RedUtils is a distributed lock and using Redis for storing and expiring locks wi
 
 
 ## Getting Started ##
-First add the following dependency (Java 8 is required)
-`
-`
 
-After that you can easily use it:
+### Requirements ##
+Install Redis or using following command if you have Docker installed
+```
+docker run --name some-redis  -e ALLOW_EMPTY_PASSWORD=yes -p 6379:6379 --rm -it redis
+```
+
+Add the following dependency (Java 8 is required)
 
 ```
-RedUtilsLockImpl redUtilsLock = new RedUtilsLockImpl();
+<dependency>
+    <groupId>com.github.siahsang</groupId>
+    <artifactId>red-utils</artifactId>
+    <version>1.0.2</version>
+</dependency>
+```
+
+
+
+### How to use it? ##
+
+Getting an auto-refreshing lock with default configuration
+```
+RedUtilsLock redUtilsLock = new RedUtilsLockImpl();
+redUtilsLock.acquire("lock1", () -> {
+    // do some operation
+});
 ```
 

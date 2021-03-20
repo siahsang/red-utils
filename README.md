@@ -48,11 +48,50 @@ Add the following dependency (Java 8 is required)
 
 ### How to use it? ##
 
-Getting an auto-refreshing lock with default configuration
+Getting the lock with the default configuration. Wait for getting lock if it is acquired by another thread.
+
 ```
 RedUtilsLock redUtilsLock = new RedUtilsLockImpl();
 redUtilsLock.acquire("lock1", () -> {
-    // do some operation
+    // some operation
 });
 ```
+
+Try to acquire the lock and return true after executing the operation, otherwise, return false immediately.
+```
+RedUtilsLock redUtilsLock = new RedUtilsLockImpl();
+boolean getLockSuccessfully = redUtilsLock.tryAcquire("lock1", () -> {
+    // some operation
+});
+```
+
+You can also provide configuration when initializing RedUtilsLock
+```
+RedUtilsConfig redUtilsConfig = new RedUtilsConfig.RedUtilsConfigBuilder()
+            .hostAddress("127.0.0.1")
+            .port("6379")
+            .replicaCount(3)
+            .leaseTimeMillis(40_000)
+            .build();
+
+RedUtilsLock redUtilsLock = new RedUtilsLockImpl(redUtilsConfig);
+```
+
+To see more example please see tests
+
+
+### Running the tests ###
+For running the tests, you should install Docker(test cases use [testcontainer](https://www.testcontainers.org/) for running Redis). 
+After that you can run all tests with:
+``` 
+mvn clean test
+```
+
+## Note ##
+There are some caveats that you should be aware of:
+
+1. I assume clocks are synchronized between different nodes
+2. I assume there aren't any long thread pause or process pause after getting lock but before using it
+3. To achieve strong consistency you should enable the option fsync=always on every Redis instance  
+4. In current implementation locks is not fair; for example, a client may wait a long time to get the lock and at the same time another client get the lock immediately
 

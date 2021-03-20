@@ -3,7 +3,7 @@
 
     <groupId>com.github.siahsang</groupId>
     <artifactId>red-utils</artifactId>
-    <version>1.0.4</version>
+    <version>1.0.5-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <name>Red-Utils</name>
@@ -35,7 +35,7 @@
         <connection>scm:git:https://github.com/siahsang/red-utils.git</connection>
         <url>https://github.com/siahsang/red-utils</url>
         <developerConnection>scm:git:https://github.com/siahsang/red-utils.git</developerConnection>
-        <tag>v1.0.4</tag>
+        <tag>red-utils-1.0.2</tag>
     </scm>
 
 

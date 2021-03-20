@@ -87,7 +87,7 @@ After that you can run all tests with:
 mvn clean test
 ```
 
-## Note ##
+## Caveats ##
 There are some caveats that you should be aware of:
 
 1. I assume clocks are synchronized between different nodes

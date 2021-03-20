@@ -40,7 +40,7 @@ Add the following dependency (Java 8 is required)
 <dependency>
     <groupId>com.github.siahsang</groupId>
     <artifactId>red-utils</artifactId>
-    <version>1.0.2</version>
+    <version>1.0.4</version>
 </dependency>
 ```
 

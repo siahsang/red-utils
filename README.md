@@ -19,7 +19,7 @@
 
 
 ## Introduction ##
-RedUtils is a distributed lock and using Redis for storing and expiring locks with. It has the following feature:
+RedUtils is a distributed lock and using Redis for storing and expiring locks. It has the following features:
 
 -  **Leased-Based Lock**: If any clients crash or restarted abnormally, eventually lock will be free. 
 -  **Safe**: Provided that fsync=always on every Redis instance we have safety even if Redis become unavailable after getting lock. 
@@ -29,7 +29,7 @@ RedUtils is a distributed lock and using Redis for storing and expiring locks wi
 ## Getting Started ##
 
 ### Requirements ##
-Install Redis or using following command if you have Docker installed
+Install Redis or use the following command if you have Docker installed
 ```
 docker run --name some-redis  -e ALLOW_EMPTY_PASSWORD=yes -p 6379:6379 --rm -it redis
 ```
@@ -48,7 +48,7 @@ Add the following dependency (Java 8 is required)
 
 ### How to use it? ##
 
-Getting the lock with the default configuration. Wait for getting lock if it is acquired by another thread.
+Getting the lock with the default configuration. Wait for getting the lock if it is acquired by another thread.
 
 ```
 RedUtilsLock redUtilsLock = new RedUtilsLockImpl();
@@ -77,7 +77,7 @@ RedUtilsConfig redUtilsConfig = new RedUtilsConfig.RedUtilsConfigBuilder()
 RedUtilsLock redUtilsLock = new RedUtilsLockImpl(redUtilsConfig);
 ```
 
-To see more example please see tests
+To see more examples please see the tests
 
 
 ### Running the tests ###
@@ -90,8 +90,12 @@ mvn clean test
 ## Caveats ##
 There are some caveats that you should be aware of:
 
-1. I assume clocks are synchronized between different nodes
-2. I assume there aren't any long thread pause or process pause after getting lock but before using it
-3. To achieve strong consistency you should enable the option fsync=always on every Redis instance  
-4. In current implementation locks is not fair; for example, a client may wait a long time to get the lock and at the same time another client get the lock immediately
+1. I assume clocks are synchronized between different nodes.
+2. I assume there aren't any long thread pause or process pause after getting lock but before using it.
+3. To achieve strong consistency you should enable the option fsync=always on every Redis instance.
+4. In current implementation, locks is not fair; for example, a client may wait a long time to get the lock and at the same time another client get the lock immediately.
+
+### Dependencies ###
+- Jedis
+- slf4j
 

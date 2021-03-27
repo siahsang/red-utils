@@ -17,12 +17,15 @@
 
 </p>
 
+## *Note* ##
+For reading the idea and the algorithm behind this, please visit [https://dzone.com/articles/distributed-lock-implementation-with-redis](https://dzone.com/articles/distributed-lock-implementation-with-redis
+)
 
 ## Introduction ##
 RedUtils is a distributed lock and using Redis for storing and expiring locks. It has the following features:
 
 -  **Leased-Based Lock**: If any clients crash or restarted abnormally, eventually lock will be free. 
--  **Safe**: Provided that fsync=always on every Redis instance we have safety even if Redis become unavailable after getting lock. 
+-  **Safe**: Provided that *fsync=always* on every Redis instance we have safety even if Redis become unavailable after getting lock. 
 -  **Auto-Refreshing Lock**: A lock that is acquired by the client can be held as long as the client is alive, and the connection is OK. 
 
 
@@ -97,5 +100,5 @@ There are some caveats that you should be aware of:
 
 ### Dependencies ###
 - Jedis
-- slf4j
+- Slf4j
 

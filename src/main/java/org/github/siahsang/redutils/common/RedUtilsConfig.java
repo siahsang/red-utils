@@ -149,20 +149,12 @@ public class RedUtilsConfig {
         }
 
         public RedUtilsConfigBuilder uri(String uri) {
-            this.uri = createUri(uri);
+            this.uri = URI.create(uri);
             return this;
         }
 
-        private URI createUri(String uri) {
-            try {
-                return new URI(uri);
-            } catch (URISyntaxException e) {
-                throw new IllegalArgumentException(e);
-            }
-        }
-
         private URI parseUri() {
-            return uri != null ? uri : createUri(REDIS_URI_PREFIX + hostAddress + ":" + port);
+            return uri != null ? uri : URI.create(REDIS_URI_PREFIX + hostAddress + ":" + port);
         }
     }
 }

@@ -48,6 +48,10 @@ public class RedUtilsLockImpl implements RedUtilsLock {
         this(hostAddress, port, 0);
     }
 
+    public RedUtilsLockImpl(String uri) {
+        this(URI.create(uri));
+    }
+
     public RedUtilsLockImpl(URI uri) {
         this(new RedUtilsConfig
                 .RedUtilsConfigBuilder()

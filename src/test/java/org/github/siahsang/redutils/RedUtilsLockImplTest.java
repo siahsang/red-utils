@@ -344,6 +344,32 @@ class RedUtilsLockImplTest extends AbstractBaseTest {
     }
 
     @Test
+    void test_acquire_with_URI_WHEN_happy_path() throws Exception {
+        //************************
+        //          Given
+        //************************
+        RedUtilsLockImpl redUtilsLock = new RedUtilsLockImpl("redis://" + GENERAL_REDIS_ADDRESS.masterHostAddress + ":" + GENERAL_REDIS_ADDRESS.masterPort);
+        AtomicBoolean firstTryToGetLock = new AtomicBoolean(false);
+
+
+        //************************
+        //          WHEN
+        //************************
+        redUtilsLock.acquire("lock1", () -> {
+            sleepSeconds(2);
+            firstTryToGetLock.set(true);
+        });
+
+
+        //************************
+        //          THEN
+        //************************
+        Assertions.assertTrue(firstTryToGetLock.get());
+        Assertions.assertNull(getKey("lock1"));
+
+    }
+
+    @Test
     void test_acquire_get_lock_multiple_time() throws Exception {
         //************************
         //          Given

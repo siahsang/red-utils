@@ -1,5 +1,6 @@
 package org.github.siahsang.redutils;
 
+import java.net.URI;
 import org.github.siahsang.redutils.common.OperationCallBack;
 import org.github.siahsang.redutils.common.RedUtilsConfig;
 import org.github.siahsang.redutils.common.ThreadManager;
@@ -45,6 +46,13 @@ public class RedUtilsLockImpl implements RedUtilsLock {
 
     public RedUtilsLockImpl(final String hostAddress, final int port) {
         this(hostAddress, port, 0);
+    }
+
+    public RedUtilsLockImpl(URI uri) {
+        this(new RedUtilsConfig
+                .RedUtilsConfigBuilder()
+                .uri(uri)
+                .build());
     }
 
     /**

@@ -1,5 +1,8 @@
 package org.github.siahsang.redutils.common;
 
+import java.net.URI;
+import java.net.URISyntaxException;
+
 /**
  * @author Javad Alimohammadi
  */
@@ -23,9 +26,7 @@ public class RedUtilsConfig {
 
     private final int replicaCount;
 
-    private final String hostAddress;
-
-    public final int port;
+    private final URI uri;
 
     private RedUtilsConfig(RedUtilsConfigBuilder redUtilsConfigBuilder) {
         this.waitingTimeForReplicasMillis = redUtilsConfigBuilder.waitingTimeForReplicasMillis;
@@ -35,9 +36,7 @@ public class RedUtilsConfig {
         this.lockMaxPoolSize = redUtilsConfigBuilder.maxPoolSize;
         this.unlockedMessagePattern = redUtilsConfigBuilder.redUtilsUnLockedMessage;
         this.replicaCount = redUtilsConfigBuilder.replicaCount;
-        this.hostAddress = redUtilsConfigBuilder.hostAddress;
-        this.port = redUtilsConfigBuilder.port;
-
+        this.uri = redUtilsConfigBuilder.parseUri();
     }
 
     public int getWaitingTimeForReplicasMillis() {
@@ -68,14 +67,9 @@ public class RedUtilsConfig {
         return replicaCount;
     }
 
-    public String getHostAddress() {
-        return hostAddress;
+    public URI getUri() {
+        return uri;
     }
-
-    public int getPort() {
-        return port;
-    }
-
 
     public static final class RedUtilsConfigBuilder {
         private int waitingTimeForReplicasMillis = 1000;
@@ -95,6 +89,8 @@ public class RedUtilsConfig {
         private String hostAddress = DEFAULT_HOST_ADDRESS;
 
         private int port = DEFAULT_PORT;
+
+        private URI uri = null;
 
         public RedUtilsConfig build() {
             return new RedUtilsConfig(this);
@@ -143,6 +139,28 @@ public class RedUtilsConfig {
         public RedUtilsConfigBuilder port(int port) {
             this.port = port;
             return this;
+        }
+
+        public RedUtilsConfigBuilder uri(URI uri) {
+            this.uri = uri;
+            return this;
+        }
+
+        public RedUtilsConfigBuilder uri(String uri) {
+            this.uri = createUri(uri);
+            return this;
+        }
+
+        private URI createUri(String uri) {
+            try {
+                return new URI(uri);
+            } catch (URISyntaxException e) {
+                throw new IllegalArgumentException(e);
+            }
+        }
+
+        private URI parseUri() {
+            return uri != null ? uri : createUri(hostAddress + ":" + port);
         }
     }
 }

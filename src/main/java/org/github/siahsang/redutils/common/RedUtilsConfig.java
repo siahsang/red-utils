@@ -12,6 +12,8 @@ public class RedUtilsConfig {
 
     public static final int DEFAULT_PORT = 6379;
 
+    private static final String REDIS_URI_PREFIX = "redis://";
+
     private final int waitingTimeForReplicasMillis;
 
     private final int retryCountForSyncingWithReplicas;
@@ -160,7 +162,7 @@ public class RedUtilsConfig {
         }
 
         private URI parseUri() {
-            return uri != null ? uri : createUri(hostAddress + ":" + port);
+            return uri != null ? uri : createUri(REDIS_URI_PREFIX + hostAddress + ":" + port);
         }
     }
 }

@@ -1,5 +1,8 @@
 package org.github.siahsang.redutils.common;
 
+import java.net.URI;
+import java.net.URISyntaxException;
+
 /**
  * @author Javad Alimohammadi
  */
@@ -8,6 +11,8 @@ public class RedUtilsConfig {
     public static final String DEFAULT_HOST_ADDRESS = "127.0.0.1";
 
     public static final int DEFAULT_PORT = 6379;
+
+    private static final String REDIS_URI_PREFIX = "redis://";
 
     private final int waitingTimeForReplicasMillis;
 
@@ -23,9 +28,7 @@ public class RedUtilsConfig {
 
     private final int replicaCount;
 
-    private final String hostAddress;
-
-    public final int port;
+    private final URI uri;
 
     private RedUtilsConfig(RedUtilsConfigBuilder redUtilsConfigBuilder) {
         this.waitingTimeForReplicasMillis = redUtilsConfigBuilder.waitingTimeForReplicasMillis;
@@ -35,9 +38,7 @@ public class RedUtilsConfig {
         this.lockMaxPoolSize = redUtilsConfigBuilder.maxPoolSize;
         this.unlockedMessagePattern = redUtilsConfigBuilder.redUtilsUnLockedMessage;
         this.replicaCount = redUtilsConfigBuilder.replicaCount;
-        this.hostAddress = redUtilsConfigBuilder.hostAddress;
-        this.port = redUtilsConfigBuilder.port;
-
+        this.uri = redUtilsConfigBuilder.parseUri();
     }
 
     public int getWaitingTimeForReplicasMillis() {
@@ -68,14 +69,9 @@ public class RedUtilsConfig {
         return replicaCount;
     }
 
-    public String getHostAddress() {
-        return hostAddress;
+    public URI getUri() {
+        return uri;
     }
-
-    public int getPort() {
-        return port;
-    }
-
 
     public static final class RedUtilsConfigBuilder {
         private int waitingTimeForReplicasMillis = 1000;
@@ -95,6 +91,8 @@ public class RedUtilsConfig {
         private String hostAddress = DEFAULT_HOST_ADDRESS;
 
         private int port = DEFAULT_PORT;
+
+        private URI uri = null;
 
         public RedUtilsConfig build() {
             return new RedUtilsConfig(this);
@@ -143,6 +141,20 @@ public class RedUtilsConfig {
         public RedUtilsConfigBuilder port(int port) {
             this.port = port;
             return this;
+        }
+
+        public RedUtilsConfigBuilder uri(URI uri) {
+            this.uri = uri;
+            return this;
+        }
+
+        public RedUtilsConfigBuilder uri(String uri) {
+            this.uri = URI.create(uri);
+            return this;
+        }
+
+        private URI parseUri() {
+            return uri != null ? uri : URI.create(REDIS_URI_PREFIX + hostAddress + ":" + port);
         }
     }
 }

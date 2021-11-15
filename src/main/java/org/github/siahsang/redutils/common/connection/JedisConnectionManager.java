@@ -30,7 +30,6 @@ public class JedisConnectionManager implements ConnectionManager<Jedis> {
 
     private final Map<String, List<Jedis>> reservedConnections = new ConcurrentHashMap<>();
 
-
     private final JedisPool channelConnectionPool;
 
     public JedisConnectionManager(RedUtilsConfig redUtilsConfig) {
@@ -38,8 +37,7 @@ public class JedisConnectionManager implements ConnectionManager<Jedis> {
 
         GenericObjectPoolConfig<Jedis> lockPoolConfig = ConnectionPoolFactory.makePool(capacity.get());
         this.channelConnectionPool = new JedisPool(lockPoolConfig,
-                redUtilsConfig.getHostAddress(),
-                redUtilsConfig.getPort(),
+                redUtilsConfig.getUri(),
                 redUtilsConfig.getReadTimeOutMillis()
         );
     }
